@@ -69,7 +69,7 @@ func main() {
 	// Migrasi skema otomatis dari struct domain. Untuk perubahan destruktif
 	// (rename/drop kolom) tetap tulis migrasi manual — AutoMigrate hanya
 	// MENAMBAH, tidak pernah menghapus.
-	if err := db.AutoMigrate(&domain.User{}); err != nil {
+	if err := db.AutoMigrate(&domain.User{}, &domain.Kategori{}, &domain.Produk{}); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
 
@@ -84,8 +84,13 @@ func main() {
 	userRepo := pgrepo.NewUserRepository(db)
 	tokenRepo := redisrepo.NewTokenRepository(rdb)
 
+	produkRepo := pgrepo.NewProdukRepository(db)
+	kategoriRepo := pgrepo.NewKategoriRepository(db)
+
 	userUC := usecase.NewUserUsecase(userRepo)
 	authUC := usecase.NewAuthUsecase(userRepo, tokenRepo, cfg.JWTSecret, cfg.AccessTokenTTL, cfg.RefreshTTL)
+	produkUC := usecase.NewProdukUsecase(produkRepo, kategoriRepo)
+	kategoriUC := usecase.NewKategoriUsecase(kategoriRepo)
 
 	semaiAdmin(db, cfg, log)
 
@@ -142,7 +147,7 @@ func main() {
 	e.Use(echomw.Recover())
 	e.Use(appmw.Keamanan(cfg.CORSOrigins, cfg.RateRPS)...)
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

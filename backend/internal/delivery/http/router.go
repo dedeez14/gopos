@@ -15,9 +15,12 @@ func DaftarkanRute(
 	e *echo.Echo,
 	authUC *usecase.AuthUsecase,
 	userUC *usecase.UserUsecase,
+	produkUC *usecase.ProdukUsecase,
+	kategoriUC *usecase.KategoriUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
+	produkH := NewProdukHandler(produkUC, kategoriUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -39,4 +42,16 @@ func DaftarkanRute(
 	privat.POST("/users", userH.Buat, appmw.ButuhIzin(domain.PermUserKelola))
 	privat.PUT("/users/:id", userH.Perbarui, appmw.ButuhIzin(domain.PermUserKelola))
 	privat.DELETE("/users/:id", userH.Hapus, appmw.ButuhIzin(domain.PermUserKelola))
+
+	// Katalog: BACA terbuka semua peran (kasir memakainya di layar jual —
+	// harga_beli otomatis disembunyikan untuk kasir); TULIS khusus O/M.
+	privat.GET("/produk", produkH.Daftar, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/produk/:id", produkH.Ambil, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/produk", produkH.Buat, appmw.ButuhIzin(domain.PermProdukKelola))
+	privat.PUT("/produk/:id", produkH.Perbarui, appmw.ButuhIzin(domain.PermProdukKelola))
+	privat.DELETE("/produk/:id", produkH.Hapus, appmw.ButuhIzin(domain.PermProdukKelola))
+
+	privat.GET("/kategori", produkH.DaftarKategori, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/kategori", produkH.BuatKategori, appmw.ButuhIzin(domain.PermProdukKelola))
+	privat.DELETE("/kategori/:id", produkH.HapusKategori, appmw.ButuhIzin(domain.PermProdukKelola))
 }

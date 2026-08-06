@@ -18,7 +18,8 @@ func Status(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrTidakDitemukan):
 		return http.StatusNotFound
-	case errors.Is(err, domain.ErrEmailTerpakai):
+	case errors.Is(err, domain.ErrEmailTerpakai),
+		errors.Is(err, domain.ErrKodeTerpakai):
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrKredensialSalah),
 		errors.Is(err, domain.ErrTokenTidakSah):

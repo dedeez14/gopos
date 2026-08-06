@@ -30,18 +30,19 @@ const (
 type Permission string
 
 const (
-	PermUserLihat  Permission = "users.lihat"
-	PermUserKelola Permission = "users.kelola"
-	PermLaporan    Permission = "laporan.lihat"
-	PermKasir      Permission = "kasir.operasi"
+	PermUserLihat    Permission = "users.lihat"
+	PermUserKelola   Permission = "users.kelola"
+	PermLaporan      Permission = "laporan.lihat"
+	PermKasir        Permission = "kasir.operasi"
+	PermProdukKelola Permission = "produk.kelola" // CRUD katalog; BACA katalog cukup PermKasir
 )
 
 // RolePermissions memetakan peran → izin. SATU sumber kebenaran RBAC;
 // middleware dan UI sama-sama membacanya. Fail-closed: peran yang tidak
 // terdaftar tidak punya izin apa pun.
 var RolePermissions = map[Role][]Permission{
-	RoleOwner:   {PermUserLihat, PermUserKelola, PermLaporan, PermKasir},
-	RoleManager: {PermUserLihat, PermLaporan, PermKasir},
+	RoleOwner:   {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola},
+	RoleManager: {PermUserLihat, PermLaporan, PermKasir, PermProdukKelola},
 	RoleKasir:   {PermKasir},
 }
 
@@ -85,6 +86,7 @@ type TokenPair struct {
 var (
 	ErrTidakDitemukan  = errors.New("data tidak ditemukan")
 	ErrEmailTerpakai   = errors.New("email sudah terdaftar")
+	ErrKodeTerpakai    = errors.New("kode sudah dipakai produk lain")
 	ErrKredensialSalah = errors.New("email atau kata sandi salah")
 	ErrUserNonaktif    = errors.New("akun dinonaktifkan")
 	ErrTokenTidakSah   = errors.New("token tidak sah atau kedaluwarsa")
