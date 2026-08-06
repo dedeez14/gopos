@@ -1,0 +1,18 @@
+[Unit]
+Description=Tuleh Server (backend Go Tuleh POS)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/dede/tuleh-server/backend
+EnvironmentFile=/home/dede/tuleh-server/backend/.env
+ExecStart=/home/dede/tuleh-server/backend/bin/tuleh-server
+Restart=on-failure
+RestartSec=3
+# Pengetatan ringan
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

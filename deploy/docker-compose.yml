@@ -1,0 +1,45 @@
+# Infrastruktur Tuléh Server — TERPISAH dari stack MOVERA (infra-mysql/redis):
+# deploy ERP boleh FLUSHDB redis-nya sendiri tanpa menendang sesi Tuléh.
+# Bind hanya ke 127.0.0.1 — akses dari luar lewat reverse proxy/API, bukan DB.
+#
+# Jalankan:  docker compose --env-file .env up -d   (salin .env.example → .env)
+
+name: tuleh-infra
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tuleh-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tuleh_pos
+      POSTGRES_USER: tuleh
+      POSTGRES_PASSWORD: ${TULEH_DB_PASS:?isi di deploy/.env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - tuleh-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tuleh -d tuleh_pos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: tuleh-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - tuleh-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tuleh-pgdata:
+  tuleh-redisdata:

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	echomw "github.com/labstack/echo/v4/middleware"
@@ -50,10 +51,16 @@ func Keamanan(origins []string, rps float64) []echo.MiddlewareFunc {
 }
 
 // RateKetat adalah limiter khusus endpoint sensitif (login/refresh) — jauh
-// lebih ketat dari limiter umum.
+// lebih ketat dari limiter umum. Laju 1 rps/IP menahan brute force; burst 5
+// memberi ruang alur sah yang beruntun (login → refresh → coba ulang) tanpa
+// 429 palsu.
 func RateKetat() echo.MiddlewareFunc {
 	return echomw.RateLimiterWithConfig(echomw.RateLimiterConfig{
-		Store: echomw.NewRateLimiterMemoryStore(rate.Limit(1)), // 1 rps/IP, burst bawaan
+		Store: echomw.NewRateLimiterMemoryStoreWithConfig(echomw.RateLimiterMemoryStoreConfig{
+			Rate:      rate.Limit(1),
+			Burst:     5,
+			ExpiresIn: 3 * time.Minute,
+		}),
 		DenyHandler: func(c echo.Context, _ string, _ error) error {
 			return respond.Gagal(c, http.StatusTooManyRequests, "Terlalu banyak percobaan. Tunggu sebentar.", nil)
 		},

@@ -4,14 +4,11 @@
 package http
 
 import (
-	"errors"
-
 	"github.com/labstack/echo/v4"
 
 	"github.com/tuleh-pos/server/internal/usecase"
 	"github.com/tuleh-pos/server/pkg/apperror"
 	"github.com/tuleh-pos/server/pkg/respond"
-	"github.com/tuleh-pos/server/pkg/validasi"
 )
 
 type AuthHandler struct {
@@ -120,19 +117,14 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 	return respond.Sukses(c, nil, nil, "Berhasil keluar.")
 }
 
-// bindDanValidasi menggabungkan bind + validasi + respons 422 seragam — satu
-// helper untuk SEMUA handler (DRY): kegagalan validasi selalu berbentuk
-// errors berupa map field→pesan Indonesia.
+// bindDanValidasi menggabungkan bind + validasi. SENGAJA tidak menulis
+// respons apa pun — error yang dikembalikan (echo.HTTPError / GagalValidasi)
+// diterjemahkan SEKALI di HTTPErrorHandler global (main.go). Menulis respons
+// di helper lalu return nil membuat handler lanjut jalan dan menulis respons
+// kedua — bug yang pernah terjadi, jangan diulang.
 func bindDanValidasi(c echo.Context, tujuan any) error {
 	if err := c.Bind(tujuan); err != nil {
-		return respond.Gagal(c, 400, "Payload tidak dapat dibaca.", nil)
+		return echo.NewHTTPError(400, "Payload tidak dapat dibaca.")
 	}
-	if err := c.Validate(tujuan); err != nil {
-		var gagal *validasi.GagalValidasi
-		if errors.As(err, &gagal) {
-			return respond.Gagal(c, 422, gagal.Error(), gagal.Fields)
-		}
-		return respond.Gagal(c, 422, "Data tidak valid.", nil)
-	}
-	return nil
+	return c.Validate(tujuan) // nil, atau *validasi.GagalValidasi
 }

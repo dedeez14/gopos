@@ -94,21 +94,39 @@ func main() {
 	e.HideBanner = true
 	e.Validator = validasi.Baru()
 
-	// Error tak tertangkap pun keluar dalam amplop baku, bukan HTML echo.
+	// SATU penerjemah error → amplop baku (bukan HTML echo): kegagalan
+	// validasi jadi 422 + map field→pesan; echo.HTTPError memakai kode &
+	// pesannya; sisanya 500 generik (detail hanya ke log).
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
 		if c.Response().Committed {
 			return
 		}
+
+		var gagal *validasi.GagalValidasi
+		if errors.As(err, &gagal) {
+			_ = respond.Gagal(c, http.StatusUnprocessableEntity, gagal.Error(), gagal.Fields)
+			return
+		}
+
 		kode := http.StatusInternalServerError
 		pesan := "Terjadi kesalahan pada server."
 		var he *echo.HTTPError
 		if errors.As(err, &he) {
 			kode = he.Code
-			if kode == http.StatusNotFound {
+			switch kode {
+			case http.StatusNotFound:
 				pesan = "Endpoint tidak ditemukan."
+			case http.StatusMethodNotAllowed:
+				pesan = "Metode tidak diizinkan."
+			default:
+				if s, ok := he.Message.(string); ok && s != "" {
+					pesan = s
+				}
 			}
 		}
-		log.Error().Err(err).Str("path", c.Request().URL.Path).Int("kode", kode).Msg("http error")
+		if kode >= 500 {
+			log.Error().Err(err).Str("path", c.Request().URL.Path).Int("kode", kode).Msg("http error")
+		}
 		_ = respond.Gagal(c, kode, pesan, nil)
 	}
 
