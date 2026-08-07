@@ -1,0 +1,9 @@
+[Unit]
+Description=Sinkron master data MOVERA -> Tuleh Server (baca-saja)
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/dede/tuleh-server/backend
+EnvironmentFile=/home/dede/tuleh-server/backend/.env
+ExecStart=/home/dede/tuleh-server/backend/bin/sinkron

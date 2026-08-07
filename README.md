@@ -139,6 +139,18 @@ npm run dev            # http://localhost:5173 (proxy /api → :8081)
 Masuk dengan kredensial admin di atas. Interceptor axios menangani refresh
 token otomatis saat access token kedaluwarsa (401 → refresh → ulangi request).
 
+## Operasional (VPS)
+
+| Hal | Cara |
+|---|---|
+| **Backup** | `scripts/backup.sh` (pg_dump gzip + rotasi 14 hari) via systemd timer `tuleh-backup.timer` — **harian 02:30**. Manual: `bash scripts/backup.sh`. Restore: `gunzip -c backups/<file>.sql.gz \| docker exec -i tuleh-postgres psql -U tuleh -d tuleh_pos`. |
+| **Swagger** | Live di `/swagger/index.html`. Regenerasi setelah ubah anotasi: `make swag` (butuh `swag` di PATH). |
+| **CI** | `.github/workflows/ci.yml` — go vet/build/test + npm build pada push/PR ke main. |
+| **Sinkron MOVERA** | Manual `make sinkron`. Timer opsional `deploy/tuleh-sinkron.timer` (OPT-IN — `systemctl enable --now tuleh-sinkron.timer` saat siap dijadwalkan). |
+| **Layanan** | `systemctl {status,restart} tuleh-server`; log: `journalctl -u tuleh-server -f`. |
+| **Deploy panel** | `cd frontend && npm run build` → refresh (server menyajikan `dist`). |
+| **Deploy backend** | `cd backend && make build && systemctl restart tuleh-server` (atau `go build ... && restart`). |
+
 ## Konvensi yang Dijaga
 
 - **Amplop respons** identik dengan kontrak Tuléh yang sudah rilis:

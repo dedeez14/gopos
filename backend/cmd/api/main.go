@@ -43,7 +43,7 @@ import (
 	"github.com/tuleh-pos/server/pkg/respond"
 	"github.com/tuleh-pos/server/pkg/validasi"
 	// Hasil `swag init` — aktifkan baris di bawah setelah docs dihasilkan:
-	// _ "github.com/tuleh-pos/server/docs"
+	_ "github.com/tuleh-pos/server/docs"
 )
 
 func main() {

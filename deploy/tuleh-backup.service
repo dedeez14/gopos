@@ -1,0 +1,7 @@
+[Unit]
+Description=Backup PostgreSQL Tuleh Server
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/dede/tuleh-server/scripts/backup.sh

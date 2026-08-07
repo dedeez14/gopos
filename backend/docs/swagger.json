@@ -1,0 +1,3177 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend mandiri Tuléh POS. Amplop respons: {success, data, meta, message, errors}.",
+        "title": "Tuléh Server API",
+        "contact": {},
+        "version": "0.1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Mengembalikan access token (pendek) dan refresh token (panjang).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Masuk (email + kata sandi)",
+                "parameters": [
+                    {
+                        "description": "Kredensial",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Keluar (cabut refresh token)",
+                "parameters": [
+                    {
+                        "description": "Refresh token yang dicabut",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Tukar refresh token dengan pasangan token baru (rotasi)",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/hold": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Daftar hold (lintas kasir — hold kasir A bisa dilanjutkan kasir B)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.HoldResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Payload opaque milik aplikasi kasir (maks 64KB, maks 50 hold). Resume = muat payload → checkout biasa → hapus hold.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Parkir keranjang (hold) — tanpa efek uang/stok",
+                "parameters": [
+                    {
+                        "description": "Label + keranjang",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanHoldRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.HoldResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Hold penuh",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/hold/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Hapus hold (setelah resume sukses atau dibuang)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID hold",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/opname": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "stok_fisik = hasil hitung; server menyimpan SELISIH-nya di riwayat.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Opname (koreksi hitung fisik) — Owner/Manager",
+                "parameters": [
+                    {
+                        "description": "Produk + stok fisik",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.OpnameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StokLogResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/riwayat": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Riwayat pergerakan stok (MASUK/OPNAME/JUAL/BATAL, satu buku)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter produk",
+                        "name": "produk_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "MASUK|OPNAME|JUAL|BATAL",
+                        "name": "jenis",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.StokLogResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/stok-masuk": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory"
+                ],
+                "summary": "Tambah stok (restock) — Owner/Manager",
+                "parameters": [
+                    {
+                        "description": "Produk + jumlah masuk",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.StokMasukRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StokLogResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Produk non-stok (jasa)",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/kategori": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Daftar kategori",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.KategoriResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Tambah kategori (Owner/Manager)",
+                "parameters": [
+                    {
+                        "description": "Nama kategori",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanKategoriRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.KategoriResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/kategori/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Hapus kategori (produk pemakainya dilepas, tidak ikut terhapus)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID kategori",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/laporan/keuangan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Ringkasan keuangan bulan (omzet, per tipe bayar, pengeluaran, laba)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM (kosong = bulan berjalan)",
+                        "name": "bulan",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/usecase.RingkasanKeuangan"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/laporan/penjualan-harian": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Omzet per hari (bahan grafik; default 14 hari terakhir)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "dari",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "sampai",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/domain.PenjualanHarian"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/laporan/produk-terlaris": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Produk paling laku (dari snapshot item transaksi)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Rentang hari (default 30, maks 365)",
+                        "name": "hari",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Jumlah baris (default 10, maks 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/domain.ProdukTerlaris"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/pelanggan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Daftar pelanggan (cari nama/telepon)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cari",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.PelangganResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/pelanggan/quick": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Telepon dinormalkan ke 62…; nomor yang sudah terdaftar mengembalikan pelanggan LAMA (bukan galat).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Quick add pelanggan (nama + WA) — alat kasir",
+                "parameters": [
+                    {
+                        "description": "Nama + telepon",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.QuickPelangganRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.PelangganResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/pelanggan/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Ubah pelanggan (Owner/Manager)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data pelanggan",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanPelangganRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.PelangganResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Telepon dipakai pelanggan lain",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pelanggan"
+                ],
+                "summary": "Nonaktifkan pelanggan (riwayat transaksi terjaga)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/pengeluaran": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Daftar pengeluaran (filter bulan)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM",
+                        "name": "bulan",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.PengeluaranResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Catat pengeluaran operasional (dua kolom: untuk apa, berapa)",
+                "parameters": [
+                    {
+                        "description": "Pengeluaran",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CatatPengeluaranRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.PengeluaranResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/pengeluaran/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "laporan"
+                ],
+                "summary": "Hapus catatan pengeluaran",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/produk": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Kasir: hanya item aktif, tanpa harga_beli. Manajemen: + ?termasuk_nonaktif=1 dan harga_beli terisi.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Katalog produk (paginasi + filter)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cari nama/kode/barcode",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "PRODUK | JASA (kosong = semua)",
+                        "name": "tipe",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter kategori",
+                        "name": "kategori_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Hanya favorit",
+                        "name": "favorit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Hanya promo aktif hari ini",
+                        "name": "promo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Hanya dihormati untuk manajemen",
+                        "name": "termasuk_nonaktif",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Baris per halaman (maks 100)",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.ProdukResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Tambah produk (Owner/Manager)",
+                "parameters": [
+                    {
+                        "description": "Data produk",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanProdukRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.ProdukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Kode sudah dipakai",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/produk/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Detail produk",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID produk",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.ProdukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Ubah produk (Owner/Manager)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID produk",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data produk (harga_promo null = cabut promo)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanProdukRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.ProdukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "produk"
+                ],
+                "summary": "Nonaktifkan produk (bukan hapus baris — riwayat transaksi terjaga)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID produk",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/sesi": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Daftar sesi (laporan — Owner/Manager)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.SesiResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/sesi/aktif": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Sesi BUKA milik pengguna saat ini (404 bila tidak ada)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.SesiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/sesi/buka": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Buka sesi kasir (satu sesi BUKA per pengguna)",
+                "parameters": [
+                    {
+                        "description": "Kas awal laci",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.BukaSesiRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.SesiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Masih ada sesi terbuka",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/sesi/tutup": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Tutup sesi (hitung kas sistem = kas awal + tunai, dan selisihnya)",
+                "parameters": [
+                    {
+                        "description": "Kas fisik hasil hitung kasir",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.TutupSesiRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.SesiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Sesi sudah ditutup",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/sesi/{id}/rekap": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Rekap sesi (pemilik sesi, atau peran ber-izin laporan)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID sesi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.SesiResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaksi": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Riwayat transaksi (paginasi + filter tanggal/sesi)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter sesi",
+                        "name": "sesi_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "tanggal_dari",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM-DD",
+                        "name": "tanggal_sampai",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.StrukResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/transaksi/checkout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Idempotency-Key (header atau body) yang sama tidak memproses dua kali. harga=0 → server memakai harga efektif katalog (promo dihormati).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Checkout penjualan (wajib sesi BUKA)",
+                "parameters": [
+                    {
+                        "description": "Keranjang",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.CheckoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StrukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Belum ada sesi terbuka",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaksi/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Struk satu transaksi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID transaksi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StrukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaksi/{id}/batal": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Hanya selama sesi transaksi masih BUKA. Kasir: transaksi sendiri; peran ber-izin laporan: milik siapa pun.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kasir"
+                ],
+                "summary": "Batalkan transaksi (void) — stok kembali, status DIBATALKAN",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID transaksi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StrukResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Sudah dibatalkan / sesi sudah tutup",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/usahas": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usaha"
+                ],
+                "summary": "Daftar usaha/merchant (SUPERADMIN)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cari nama/kode",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.UsahaResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Owner langsung bisa login dan mengelola usahanya (produk, kasir, dll).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usaha"
+                ],
+                "summary": "Buat usaha BARU + akun owner-nya sekaligus (SUPERADMIN)",
+                "parameters": [
+                    {
+                        "description": "Usaha + owner",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.BuatUsahaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.UsahaResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Email owner / kode usaha sudah dipakai",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/usahas/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usaha"
+                ],
+                "summary": "Ubah nama / SUSPEND usaha (aktif=false menolak login penggunanya)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID usaha",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Perubahan",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.UbahUsahaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.UsahaResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Daftar pengguna (paginasi + pencarian)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cari nama/email",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Halaman (mulai 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Baris per halaman (maks 100)",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.UserResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/respond.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Tambah pengguna",
+                "parameters": [
+                    {
+                        "description": "Data pengguna (password wajib saat membuat)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Email sudah terdaftar",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Detail satu pengguna",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID pengguna",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Ubah pengguna",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID pengguna",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data pengguna (password kosong = tidak diganti)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Hapus pengguna",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID pengguna",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.PenjualanHarian": {
+            "type": "object",
+            "properties": {
+                "diskon": {
+                    "type": "number"
+                },
+                "jumlah_trx": {
+                    "type": "integer"
+                },
+                "omzet": {
+                    "type": "number"
+                },
+                "pajak": {
+                    "type": "number"
+                },
+                "tanggal": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ProdukTerlaris": {
+            "type": "object",
+            "properties": {
+                "nama": {
+                    "type": "string"
+                },
+                "omzet": {
+                    "type": "number"
+                },
+                "produk_id": {
+                    "type": "integer"
+                },
+                "terjual": {
+                    "type": "number"
+                }
+            }
+        },
+        "http.BuatUsahaRequest": {
+            "type": "object",
+            "required": [
+                "nama",
+                "owner_email",
+                "owner_nama",
+                "owner_password"
+            ],
+            "properties": {
+                "kode": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "owner_email": {
+                    "type": "string",
+                    "maxLength": 150
+                },
+                "owner_nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "owner_password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8
+                }
+            }
+        },
+        "http.BukaSesiRequest": {
+            "type": "object",
+            "properties": {
+                "catatan": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "kas_awal": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
+        "http.CatatPengeluaranRequest": {
+            "type": "object",
+            "required": [
+                "keterangan",
+                "nominal"
+            ],
+            "properties": {
+                "keterangan": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "nominal": {
+                    "type": "number"
+                },
+                "tanggal": {
+                    "description": "kosong = hari ini",
+                    "type": "string"
+                }
+            }
+        },
+        "http.CheckoutRequest": {
+            "type": "object",
+            "required": [
+                "items",
+                "tipe_pembayaran"
+            ],
+            "properties": {
+                "catatan": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "dibayar": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "diskon_nominal": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "diskon_persen": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "idempotency_key": {
+                    "type": "string",
+                    "maxLength": 80
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/http.ItemCheckoutRequest"
+                    }
+                },
+                "pelanggan_id": {
+                    "type": "integer"
+                },
+                "tipe_pembayaran": {
+                    "type": "string",
+                    "enum": [
+                        "TUNAI",
+                        "TRANSFER",
+                        "QRIS"
+                    ]
+                }
+            }
+        },
+        "http.HoldResponse": {
+            "type": "object",
+            "properties": {
+                "dibuat": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kasir": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "object"
+                }
+            }
+        },
+        "http.ItemCheckoutRequest": {
+            "type": "object",
+            "required": [
+                "kuantitas",
+                "produk_id"
+            ],
+            "properties": {
+                "diskon_persen": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "harga": {
+                    "description": "0 = pakai harga efektif katalog",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "kuantitas": {
+                    "type": "number"
+                },
+                "pajak_persen": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "produk_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "http.ItemStruk": {
+            "type": "object",
+            "properties": {
+                "diskon_persen": {
+                    "type": "number"
+                },
+                "harga": {
+                    "type": "number"
+                },
+                "kuantitas": {
+                    "type": "number"
+                },
+                "nama_produk": {
+                    "type": "string"
+                },
+                "pajak_persen": {
+                    "type": "number"
+                },
+                "satuan": {
+                    "type": "string"
+                },
+                "subtotal": {
+                    "type": "number"
+                }
+            }
+        },
+        "http.KategoriResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "nama": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "admin@tuleh.local"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "example": "admin1234"
+                }
+            }
+        },
+        "http.OpnameRequest": {
+            "type": "object",
+            "required": [
+                "produk_id",
+                "stok_fisik"
+            ],
+            "properties": {
+                "keterangan": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "produk_id": {
+                    "type": "integer"
+                },
+                "stok_fisik": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            }
+        },
+        "http.PelangganResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "catatan": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "telepon": {
+                    "type": "string"
+                },
+                "wa_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.PengeluaranResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "keterangan": {
+                    "type": "string"
+                },
+                "nominal": {
+                    "type": "number"
+                },
+                "pencatat": {
+                    "type": "string"
+                },
+                "tanggal": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.ProdukResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "barcode": {
+                    "type": "string"
+                },
+                "favorit": {
+                    "type": "boolean"
+                },
+                "harga_beli": {
+                    "description": "null untuk kasir",
+                    "type": "number"
+                },
+                "harga_efektif": {
+                    "type": "number"
+                },
+                "harga_jual": {
+                    "type": "number"
+                },
+                "harga_promo": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kategori": {
+                    "type": "string"
+                },
+                "kategori_id": {
+                    "type": "integer"
+                },
+                "kelola_stok": {
+                    "type": "boolean"
+                },
+                "kode": {
+                    "type": "string"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "promo_aktif": {
+                    "type": "boolean"
+                },
+                "promo_mulai": {
+                    "type": "string"
+                },
+                "promo_selesai": {
+                    "type": "string"
+                },
+                "satuan": {
+                    "type": "string"
+                },
+                "stok": {
+                    "type": "number"
+                },
+                "tipe": {
+                    "description": "PRODUK | JASA",
+                    "type": "string"
+                }
+            }
+        },
+        "http.QuickPelangganRequest": {
+            "type": "object",
+            "required": [
+                "nama"
+            ],
+            "properties": {
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "telepon": {
+                    "type": "string",
+                    "maxLength": 25
+                }
+            }
+        },
+        "http.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.SesiResponse": {
+            "type": "object",
+            "properties": {
+                "catatan": {
+                    "type": "string"
+                },
+                "dibuka_pada": {
+                    "type": "string"
+                },
+                "ditutup_pada": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kas_akhir": {
+                    "type": "number"
+                },
+                "kas_awal": {
+                    "type": "number"
+                },
+                "kas_sistem": {
+                    "type": "number"
+                },
+                "kasir": {
+                    "type": "string"
+                },
+                "nomor": {
+                    "type": "string"
+                },
+                "selisih": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total": {
+                    "description": "omzet per tipe bayar (rekap)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                }
+            }
+        },
+        "http.SimpanHoldRequest": {
+            "type": "object",
+            "required": [
+                "payload"
+            ],
+            "properties": {
+                "label": {
+                    "type": "string",
+                    "maxLength": 80
+                },
+                "payload": {
+                    "type": "object"
+                }
+            }
+        },
+        "http.SimpanKategoriRequest": {
+            "type": "object",
+            "required": [
+                "nama"
+            ],
+            "properties": {
+                "nama": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        },
+        "http.SimpanPelangganRequest": {
+            "type": "object",
+            "required": [
+                "aktif",
+                "nama"
+            ],
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "catatan": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 150
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "telepon": {
+                    "type": "string",
+                    "maxLength": 25
+                }
+            }
+        },
+        "http.SimpanProdukRequest": {
+            "type": "object",
+            "required": [
+                "aktif",
+                "harga_jual",
+                "nama",
+                "tipe"
+            ],
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "barcode": {
+                    "type": "string",
+                    "maxLength": 60
+                },
+                "favorit": {
+                    "type": "boolean"
+                },
+                "harga_beli": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "harga_jual": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "harga_promo": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "kategori_id": {
+                    "type": "integer"
+                },
+                "kelola_stok": {
+                    "type": "boolean"
+                },
+                "kode": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "promo_mulai": {
+                    "type": "string"
+                },
+                "promo_selesai": {
+                    "type": "string"
+                },
+                "satuan": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "tipe": {
+                    "type": "string",
+                    "enum": [
+                        "PRODUK",
+                        "JASA"
+                    ]
+                }
+            }
+        },
+        "http.SimpanUserRequest": {
+            "type": "object",
+            "required": [
+                "aktif",
+                "email",
+                "nama",
+                "role"
+            ],
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 150
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "OWNER",
+                        "MANAGER",
+                        "KASIR"
+                    ]
+                }
+            }
+        },
+        "http.StokLogResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "jenis": {
+                    "type": "string"
+                },
+                "jumlah": {
+                    "type": "number"
+                },
+                "keterangan": {
+                    "type": "string"
+                },
+                "pencatat": {
+                    "type": "string"
+                },
+                "produk": {
+                    "type": "string"
+                },
+                "sesi": {
+                    "type": "string"
+                },
+                "stok_sesudah": {
+                    "type": "number"
+                },
+                "waktu": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.StokMasukRequest": {
+            "type": "object",
+            "required": [
+                "jumlah",
+                "produk_id"
+            ],
+            "properties": {
+                "jumlah": {
+                    "type": "number"
+                },
+                "keterangan": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "produk_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "http.StrukResponse": {
+            "type": "object",
+            "properties": {
+                "catatan": {
+                    "type": "string"
+                },
+                "dibayar": {
+                    "type": "number"
+                },
+                "diskon_nominal": {
+                    "type": "number"
+                },
+                "diskon_persen": {
+                    "type": "number"
+                },
+                "grand_total": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.ItemStruk"
+                    }
+                },
+                "kasir": {
+                    "type": "string"
+                },
+                "kembalian": {
+                    "type": "number"
+                },
+                "nomor": {
+                    "type": "string"
+                },
+                "pelanggan": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subtotal": {
+                    "type": "number"
+                },
+                "tanggal": {
+                    "type": "string"
+                },
+                "tipe_pembayaran": {
+                    "type": "string"
+                },
+                "total_diskon": {
+                    "type": "number"
+                },
+                "total_pajak": {
+                    "type": "number"
+                }
+            }
+        },
+        "http.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "detik",
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/http.UserResponse"
+                }
+            }
+        },
+        "http.TutupSesiRequest": {
+            "type": "object",
+            "required": [
+                "sesi_id"
+            ],
+            "properties": {
+                "catatan": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "kas_akhir": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "sesi_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "http.UbahUsahaRequest": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                }
+            }
+        },
+        "http.UsahaResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "dibuat": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "kode": {
+                    "type": "string"
+                },
+                "nama": {
+                    "type": "string"
+                }
+            }
+        },
+        "http.UserResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "dibuat_pada": {
+                    "type": "string"
+                },
+                "diubah_pada": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "respond.Amplop": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "errors": {},
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/respond.Meta"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "respond.Meta": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "last_page": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "usecase.RingkasanKeuangan": {
+            "type": "object",
+            "properties": {
+                "bulan": {
+                    "type": "string"
+                },
+                "jumlah_trx": {
+                    "type": "integer"
+                },
+                "laba": {
+                    "type": "number"
+                },
+                "omzet": {
+                    "type": "number"
+                },
+                "pengeluaran": {
+                    "type": "number"
+                },
+                "per_tipe": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Isi dengan: Bearer \u003caccess_token\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

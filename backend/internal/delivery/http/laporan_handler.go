@@ -347,7 +347,7 @@ func (h *LaporanHandler) HapusPelanggan(c echo.Context) error {
 type HoldResponse struct {
 	ID      uint            `json:"id"`
 	Label   string          `json:"label"`
-	Payload json.RawMessage `json:"payload"`
+	Payload json.RawMessage `json:"payload" swaggertype:"object"`
 	Kasir   string          `json:"kasir"`
 	Dibuat  string          `json:"dibuat"`
 }
@@ -365,7 +365,7 @@ func keHoldResponse(h *domain.Hold) HoldResponse {
 
 type SimpanHoldRequest struct {
 	Label   string          `json:"label" validate:"omitempty,max=80"`
-	Payload json.RawMessage `json:"payload" validate:"required"`
+	Payload json.RawMessage `json:"payload" validate:"required" swaggertype:"object"`
 }
 
 // SimpanHold godoc

@@ -1,0 +1,1945 @@
+basePath: /api/v1
+definitions:
+  domain.PenjualanHarian:
+    properties:
+      diskon:
+        type: number
+      jumlah_trx:
+        type: integer
+      omzet:
+        type: number
+      pajak:
+        type: number
+      tanggal:
+        type: string
+    type: object
+  domain.ProdukTerlaris:
+    properties:
+      nama:
+        type: string
+      omzet:
+        type: number
+      produk_id:
+        type: integer
+      terjual:
+        type: number
+    type: object
+  http.BuatUsahaRequest:
+    properties:
+      kode:
+        maxLength: 30
+        type: string
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      owner_email:
+        maxLength: 150
+        type: string
+      owner_nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      owner_password:
+        maxLength: 72
+        minLength: 8
+        type: string
+    required:
+    - nama
+    - owner_email
+    - owner_nama
+    - owner_password
+    type: object
+  http.BukaSesiRequest:
+    properties:
+      catatan:
+        maxLength: 255
+        type: string
+      kas_awal:
+        minimum: 0
+        type: number
+    type: object
+  http.CatatPengeluaranRequest:
+    properties:
+      keterangan:
+        maxLength: 255
+        minLength: 3
+        type: string
+      nominal:
+        type: number
+      tanggal:
+        description: kosong = hari ini
+        type: string
+    required:
+    - keterangan
+    - nominal
+    type: object
+  http.CheckoutRequest:
+    properties:
+      catatan:
+        maxLength: 500
+        type: string
+      dibayar:
+        minimum: 0
+        type: number
+      diskon_nominal:
+        minimum: 0
+        type: number
+      diskon_persen:
+        maximum: 100
+        minimum: 0
+        type: number
+      idempotency_key:
+        maxLength: 80
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/http.ItemCheckoutRequest'
+        minItems: 1
+        type: array
+      pelanggan_id:
+        type: integer
+      tipe_pembayaran:
+        enum:
+        - TUNAI
+        - TRANSFER
+        - QRIS
+        type: string
+    required:
+    - items
+    - tipe_pembayaran
+    type: object
+  http.HoldResponse:
+    properties:
+      dibuat:
+        type: string
+      id:
+        type: integer
+      kasir:
+        type: string
+      label:
+        type: string
+      payload:
+        type: object
+    type: object
+  http.ItemCheckoutRequest:
+    properties:
+      diskon_persen:
+        maximum: 100
+        minimum: 0
+        type: number
+      harga:
+        description: 0 = pakai harga efektif katalog
+        minimum: 0
+        type: number
+      kuantitas:
+        type: number
+      pajak_persen:
+        maximum: 100
+        minimum: 0
+        type: number
+      produk_id:
+        type: integer
+    required:
+    - kuantitas
+    - produk_id
+    type: object
+  http.ItemStruk:
+    properties:
+      diskon_persen:
+        type: number
+      harga:
+        type: number
+      kuantitas:
+        type: number
+      nama_produk:
+        type: string
+      pajak_persen:
+        type: number
+      satuan:
+        type: string
+      subtotal:
+        type: number
+    type: object
+  http.KategoriResponse:
+    properties:
+      id:
+        type: integer
+      nama:
+        type: string
+    type: object
+  http.LoginRequest:
+    properties:
+      email:
+        example: admin@tuleh.local
+        type: string
+      password:
+        example: admin1234
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  http.OpnameRequest:
+    properties:
+      keterangan:
+        maxLength: 255
+        type: string
+      produk_id:
+        type: integer
+      stok_fisik:
+        minimum: 0
+        type: number
+    required:
+    - produk_id
+    - stok_fisik
+    type: object
+  http.PelangganResponse:
+    properties:
+      aktif:
+        type: boolean
+      catatan:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      nama:
+        type: string
+      telepon:
+        type: string
+      wa_link:
+        type: string
+    type: object
+  http.PengeluaranResponse:
+    properties:
+      id:
+        type: integer
+      keterangan:
+        type: string
+      nominal:
+        type: number
+      pencatat:
+        type: string
+      tanggal:
+        type: string
+    type: object
+  http.ProdukResponse:
+    properties:
+      aktif:
+        type: boolean
+      barcode:
+        type: string
+      favorit:
+        type: boolean
+      harga_beli:
+        description: null untuk kasir
+        type: number
+      harga_efektif:
+        type: number
+      harga_jual:
+        type: number
+      harga_promo:
+        type: number
+      id:
+        type: integer
+      kategori:
+        type: string
+      kategori_id:
+        type: integer
+      kelola_stok:
+        type: boolean
+      kode:
+        type: string
+      nama:
+        type: string
+      promo_aktif:
+        type: boolean
+      promo_mulai:
+        type: string
+      promo_selesai:
+        type: string
+      satuan:
+        type: string
+      stok:
+        type: number
+      tipe:
+        description: PRODUK | JASA
+        type: string
+    type: object
+  http.QuickPelangganRequest:
+    properties:
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      telepon:
+        maxLength: 25
+        type: string
+    required:
+    - nama
+    type: object
+  http.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  http.SesiResponse:
+    properties:
+      catatan:
+        type: string
+      dibuka_pada:
+        type: string
+      ditutup_pada:
+        type: string
+      id:
+        type: integer
+      kas_akhir:
+        type: number
+      kas_awal:
+        type: number
+      kas_sistem:
+        type: number
+      kasir:
+        type: string
+      nomor:
+        type: string
+      selisih:
+        type: number
+      status:
+        type: string
+      total:
+        additionalProperties:
+          format: float64
+          type: number
+        description: omzet per tipe bayar (rekap)
+        type: object
+    type: object
+  http.SimpanHoldRequest:
+    properties:
+      label:
+        maxLength: 80
+        type: string
+      payload:
+        type: object
+    required:
+    - payload
+    type: object
+  http.SimpanKategoriRequest:
+    properties:
+      nama:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - nama
+    type: object
+  http.SimpanPelangganRequest:
+    properties:
+      aktif:
+        type: boolean
+      catatan:
+        maxLength: 255
+        type: string
+      email:
+        maxLength: 150
+        type: string
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      telepon:
+        maxLength: 25
+        type: string
+    required:
+    - aktif
+    - nama
+    type: object
+  http.SimpanProdukRequest:
+    properties:
+      aktif:
+        type: boolean
+      barcode:
+        maxLength: 60
+        type: string
+      favorit:
+        type: boolean
+      harga_beli:
+        minimum: 0
+        type: number
+      harga_jual:
+        minimum: 0
+        type: number
+      harga_promo:
+        minimum: 0
+        type: number
+      kategori_id:
+        type: integer
+      kelola_stok:
+        type: boolean
+      kode:
+        maxLength: 30
+        type: string
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      promo_mulai:
+        type: string
+      promo_selesai:
+        type: string
+      satuan:
+        maxLength: 30
+        type: string
+      tipe:
+        enum:
+        - PRODUK
+        - JASA
+        type: string
+    required:
+    - aktif
+    - harga_jual
+    - nama
+    - tipe
+    type: object
+  http.SimpanUserRequest:
+    properties:
+      aktif:
+        type: boolean
+      email:
+        maxLength: 150
+        type: string
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+      role:
+        enum:
+        - OWNER
+        - MANAGER
+        - KASIR
+        type: string
+    required:
+    - aktif
+    - email
+    - nama
+    - role
+    type: object
+  http.StokLogResponse:
+    properties:
+      id:
+        type: integer
+      jenis:
+        type: string
+      jumlah:
+        type: number
+      keterangan:
+        type: string
+      pencatat:
+        type: string
+      produk:
+        type: string
+      sesi:
+        type: string
+      stok_sesudah:
+        type: number
+      waktu:
+        type: string
+    type: object
+  http.StokMasukRequest:
+    properties:
+      jumlah:
+        type: number
+      keterangan:
+        maxLength: 255
+        type: string
+      produk_id:
+        type: integer
+    required:
+    - jumlah
+    - produk_id
+    type: object
+  http.StrukResponse:
+    properties:
+      catatan:
+        type: string
+      dibayar:
+        type: number
+      diskon_nominal:
+        type: number
+      diskon_persen:
+        type: number
+      grand_total:
+        type: number
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/http.ItemStruk'
+        type: array
+      kasir:
+        type: string
+      kembalian:
+        type: number
+      nomor:
+        type: string
+      pelanggan:
+        type: string
+      status:
+        type: string
+      subtotal:
+        type: number
+      tanggal:
+        type: string
+      tipe_pembayaran:
+        type: string
+      total_diskon:
+        type: number
+      total_pajak:
+        type: number
+    type: object
+  http.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        description: detik
+        type: integer
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/http.UserResponse'
+    type: object
+  http.TutupSesiRequest:
+    properties:
+      catatan:
+        maxLength: 255
+        type: string
+      kas_akhir:
+        minimum: 0
+        type: number
+      sesi_id:
+        type: integer
+    required:
+    - sesi_id
+    type: object
+  http.UbahUsahaRequest:
+    properties:
+      aktif:
+        type: boolean
+      nama:
+        maxLength: 150
+        minLength: 2
+        type: string
+    type: object
+  http.UsahaResponse:
+    properties:
+      aktif:
+        type: boolean
+      dibuat:
+        type: string
+      id:
+        type: integer
+      kode:
+        type: string
+      nama:
+        type: string
+    type: object
+  http.UserResponse:
+    properties:
+      aktif:
+        type: boolean
+      dibuat_pada:
+        type: string
+      diubah_pada:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      nama:
+        type: string
+      role:
+        type: string
+    type: object
+  respond.Amplop:
+    properties:
+      data: {}
+      errors: {}
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/respond.Meta'
+      success:
+        type: boolean
+    type: object
+  respond.Meta:
+    properties:
+      current_page:
+        type: integer
+      last_page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  usecase.RingkasanKeuangan:
+    properties:
+      bulan:
+        type: string
+      jumlah_trx:
+        type: integer
+      laba:
+        type: number
+      omzet:
+        type: number
+      pengeluaran:
+        type: number
+      per_tipe:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+    type: object
+info:
+  contact: {}
+  description: 'Backend mandiri Tuléh POS. Amplop respons: {success, data, meta, message,
+    errors}.'
+  title: Tuléh Server API
+  version: 0.1.0
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Mengembalikan access token (pendek) dan refresh token (panjang).
+      parameters:
+      - description: Kredensial
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.TokenResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      summary: Masuk (email + kata sandi)
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token yang dicabut
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Keluar (cabut refresh token)
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Refresh token
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.TokenResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      summary: Tukar refresh token dengan pasangan token baru (rotasi)
+      tags:
+      - auth
+  /hold:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.HoldResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar hold (lintas kasir — hold kasir A bisa dilanjutkan kasir B)
+      tags:
+      - pelanggan
+    post:
+      consumes:
+      - application/json
+      description: Payload opaque milik aplikasi kasir (maks 64KB, maks 50 hold).
+        Resume = muat payload → checkout biasa → hapus hold.
+      parameters:
+      - description: Label + keranjang
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanHoldRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.HoldResponse'
+              type: object
+        "409":
+          description: Hold penuh
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Parkir keranjang (hold) — tanpa efek uang/stok
+      tags:
+      - pelanggan
+  /hold/{id}:
+    delete:
+      parameters:
+      - description: ID hold
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Hapus hold (setelah resume sukses atau dibuang)
+      tags:
+      - pelanggan
+  /inventory/opname:
+    post:
+      consumes:
+      - application/json
+      description: stok_fisik = hasil hitung; server menyimpan SELISIH-nya di riwayat.
+      parameters:
+      - description: Produk + stok fisik
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.OpnameRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StokLogResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Opname (koreksi hitung fisik) — Owner/Manager
+      tags:
+      - inventory
+  /inventory/riwayat:
+    get:
+      parameters:
+      - description: Filter produk
+        in: query
+        name: produk_id
+        type: integer
+      - description: MASUK|OPNAME|JUAL|BATAL
+        in: query
+        name: jenis
+        type: string
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.StokLogResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Riwayat pergerakan stok (MASUK/OPNAME/JUAL/BATAL, satu buku)
+      tags:
+      - inventory
+  /inventory/stok-masuk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Produk + jumlah masuk
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.StokMasukRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StokLogResponse'
+              type: object
+        "409":
+          description: Produk non-stok (jasa)
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Tambah stok (restock) — Owner/Manager
+      tags:
+      - inventory
+  /kategori:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.KategoriResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar kategori
+      tags:
+      - produk
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Nama kategori
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanKategoriRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.KategoriResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah kategori (Owner/Manager)
+      tags:
+      - produk
+  /kategori/{id}:
+    delete:
+      parameters:
+      - description: ID kategori
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Hapus kategori (produk pemakainya dilepas, tidak ikut terhapus)
+      tags:
+      - produk
+  /laporan/keuangan:
+    get:
+      parameters:
+      - description: YYYY-MM (kosong = bulan berjalan)
+        in: query
+        name: bulan
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/usecase.RingkasanKeuangan'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Ringkasan keuangan bulan (omzet, per tipe bayar, pengeluaran, laba)
+      tags:
+      - laporan
+  /laporan/penjualan-harian:
+    get:
+      parameters:
+      - description: YYYY-MM-DD
+        in: query
+        name: dari
+        type: string
+      - description: YYYY-MM-DD
+        in: query
+        name: sampai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.PenjualanHarian'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Omzet per hari (bahan grafik; default 14 hari terakhir)
+      tags:
+      - laporan
+  /laporan/produk-terlaris:
+    get:
+      parameters:
+      - description: Rentang hari (default 30, maks 365)
+        in: query
+        name: hari
+        type: integer
+      - description: Jumlah baris (default 10, maks 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.ProdukTerlaris'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Produk paling laku (dari snapshot item transaksi)
+      tags:
+      - laporan
+  /pelanggan:
+    get:
+      parameters:
+      - description: Cari
+        in: query
+        name: q
+        type: string
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.PelangganResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar pelanggan (cari nama/telepon)
+      tags:
+      - pelanggan
+  /pelanggan/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Nonaktifkan pelanggan (riwayat transaksi terjaga)
+      tags:
+      - pelanggan
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data pelanggan
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanPelangganRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.PelangganResponse'
+              type: object
+        "409":
+          description: Telepon dipakai pelanggan lain
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Ubah pelanggan (Owner/Manager)
+      tags:
+      - pelanggan
+  /pelanggan/quick:
+    post:
+      consumes:
+      - application/json
+      description: Telepon dinormalkan ke 62…; nomor yang sudah terdaftar mengembalikan
+        pelanggan LAMA (bukan galat).
+      parameters:
+      - description: Nama + telepon
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.QuickPelangganRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.PelangganResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Quick add pelanggan (nama + WA) — alat kasir
+      tags:
+      - pelanggan
+  /pengeluaran:
+    get:
+      parameters:
+      - description: YYYY-MM
+        in: query
+        name: bulan
+        type: string
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.PengeluaranResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar pengeluaran (filter bulan)
+      tags:
+      - laporan
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pengeluaran
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.CatatPengeluaranRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.PengeluaranResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 'Catat pengeluaran operasional (dua kolom: untuk apa, berapa)'
+      tags:
+      - laporan
+  /pengeluaran/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Hapus catatan pengeluaran
+      tags:
+      - laporan
+  /produk:
+    get:
+      description: 'Kasir: hanya item aktif, tanpa harga_beli. Manajemen: + ?termasuk_nonaktif=1
+        dan harga_beli terisi.'
+      parameters:
+      - description: Cari nama/kode/barcode
+        in: query
+        name: q
+        type: string
+      - description: PRODUK | JASA (kosong = semua)
+        in: query
+        name: tipe
+        type: string
+      - description: Filter kategori
+        in: query
+        name: kategori_id
+        type: integer
+      - description: Hanya favorit
+        in: query
+        name: favorit
+        type: boolean
+      - description: Hanya promo aktif hari ini
+        in: query
+        name: promo
+        type: boolean
+      - description: Hanya dihormati untuk manajemen
+        in: query
+        name: termasuk_nonaktif
+        type: boolean
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      - description: Baris per halaman (maks 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.ProdukResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Katalog produk (paginasi + filter)
+      tags:
+      - produk
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data produk
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanProdukRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.ProdukResponse'
+              type: object
+        "409":
+          description: Kode sudah dipakai
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Tambah produk (Owner/Manager)
+      tags:
+      - produk
+  /produk/{id}:
+    delete:
+      parameters:
+      - description: ID produk
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Nonaktifkan produk (bukan hapus baris — riwayat transaksi terjaga)
+      tags:
+      - produk
+    get:
+      parameters:
+      - description: ID produk
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.ProdukResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Detail produk
+      tags:
+      - produk
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID produk
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data produk (harga_promo null = cabut promo)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanProdukRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.ProdukResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Ubah produk (Owner/Manager)
+      tags:
+      - produk
+  /sesi:
+    get:
+      parameters:
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.SesiResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar sesi (laporan — Owner/Manager)
+      tags:
+      - kasir
+  /sesi/{id}/rekap:
+    get:
+      parameters:
+      - description: ID sesi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.SesiResponse'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Rekap sesi (pemilik sesi, atau peran ber-izin laporan)
+      tags:
+      - kasir
+  /sesi/aktif:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.SesiResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Sesi BUKA milik pengguna saat ini (404 bila tidak ada)
+      tags:
+      - kasir
+  /sesi/buka:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Kas awal laci
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.BukaSesiRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.SesiResponse'
+              type: object
+        "409":
+          description: Masih ada sesi terbuka
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Buka sesi kasir (satu sesi BUKA per pengguna)
+      tags:
+      - kasir
+  /sesi/tutup:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Kas fisik hasil hitung kasir
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.TutupSesiRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.SesiResponse'
+              type: object
+        "409":
+          description: Sesi sudah ditutup
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Tutup sesi (hitung kas sistem = kas awal + tunai, dan selisihnya)
+      tags:
+      - kasir
+  /transaksi:
+    get:
+      parameters:
+      - description: Filter sesi
+        in: query
+        name: sesi_id
+        type: integer
+      - description: YYYY-MM-DD
+        in: query
+        name: tanggal_dari
+        type: string
+      - description: YYYY-MM-DD
+        in: query
+        name: tanggal_sampai
+        type: string
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.StrukResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Riwayat transaksi (paginasi + filter tanggal/sesi)
+      tags:
+      - kasir
+  /transaksi/{id}:
+    get:
+      parameters:
+      - description: ID transaksi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StrukResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Struk satu transaksi
+      tags:
+      - kasir
+  /transaksi/{id}/batal:
+    post:
+      description: 'Hanya selama sesi transaksi masih BUKA. Kasir: transaksi sendiri;
+        peran ber-izin laporan: milik siapa pun.'
+      parameters:
+      - description: ID transaksi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StrukResponse'
+              type: object
+        "409":
+          description: Sudah dibatalkan / sesi sudah tutup
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Batalkan transaksi (void) — stok kembali, status DIBATALKAN
+      tags:
+      - kasir
+  /transaksi/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Idempotency-Key (header atau body) yang sama tidak memproses dua
+        kali. harga=0 → server memakai harga efektif katalog (promo dihormati).
+      parameters:
+      - description: Keranjang
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.CheckoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StrukResponse'
+              type: object
+        "409":
+          description: Belum ada sesi terbuka
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Checkout penjualan (wajib sesi BUKA)
+      tags:
+      - kasir
+  /usahas:
+    get:
+      parameters:
+      - description: Cari nama/kode
+        in: query
+        name: q
+        type: string
+      - description: Halaman
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.UsahaResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar usaha/merchant (SUPERADMIN)
+      tags:
+      - usaha
+    post:
+      consumes:
+      - application/json
+      description: Owner langsung bisa login dan mengelola usahanya (produk, kasir,
+        dll).
+      parameters:
+      - description: Usaha + owner
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.BuatUsahaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.UsahaResponse'
+              type: object
+        "409":
+          description: Email owner / kode usaha sudah dipakai
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Buat usaha BARU + akun owner-nya sekaligus (SUPERADMIN)
+      tags:
+      - usaha
+  /usahas/{id}:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID usaha
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Perubahan
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.UbahUsahaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.UsahaResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Ubah nama / SUSPEND usaha (aktif=false menolak login penggunanya)
+      tags:
+      - usaha
+  /users:
+    get:
+      parameters:
+      - description: Cari nama/email
+        in: query
+        name: q
+        type: string
+      - description: Halaman (mulai 1)
+        in: query
+        name: page
+        type: integer
+      - description: Baris per halaman (maks 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.UserResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/respond.Meta'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Daftar pengguna (paginasi + pencarian)
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data pengguna (password wajib saat membuat)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.UserResponse'
+              type: object
+        "409":
+          description: Email sudah terdaftar
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Tambah pengguna
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: ID pengguna
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Hapus pengguna
+      tags:
+      - users
+    get:
+      parameters:
+      - description: ID pengguna
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.UserResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Detail satu pengguna
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID pengguna
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data pengguna (password kosong = tidak diganti)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.UserResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Ubah pengguna
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Isi dengan: Bearer <access_token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
