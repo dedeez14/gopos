@@ -42,6 +42,21 @@ implementasi DB di `repository/postgres/`, endpoint di `delivery/http/`.
 - Panel disajikan binari Go yang sama (`ADMIN_DIST=frontend/dist`, SPA
   fallback) — satu origin, tanpa CORS. Setelah `npm run build`, cukup refresh.
 
+## Akun & Data Default
+
+Seeder (`go run ./cmd/seed`, idempoten — tidak menimpa data yang sudah
+diubah lewat panel) membuat titik awal yang semuanya DINAMIS:
+
+| Akun | Sandi awal | Peran |
+|---|---|---|
+| `admin@tuleh.id` | `gopos-admin-2026` | OWNER (akses penuh) |
+| `manager@tuleh.id` | `gopos-manager-2026` | MANAGER |
+| `kasir@tuleh.id` | `gopos-kasir-2026` | KASIR |
+
+**GANTI SEMUA SANDI segera setelah masuk** — menu Pengguna → Ubah.
+Plus 5 kategori umum + 7 contoh produk `CTH-…` (stok 0 — isi lewat menu
+Inventory → Tambah Stok; ubah/hapus bebas lewat menu Produk & Jasa).
+
 ## Menjalankan Backend
 
 Prasyarat: Go ≥1.23, PostgreSQL ≥14, Redis ≥6.

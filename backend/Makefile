@@ -17,5 +17,8 @@ swag: ## regenerasi dokumentasi Swagger → docs/
 test:
 	go test ./...
 
+seed: ## data default (akun 3 peran + kategori + contoh produk), idempoten
+	set -a; . ./.env; set +a; go run ./cmd/seed
+
 sinkron: ## salin master data dari MOVERA (baca-saja, idempoten)
 	set -a; . ./.env; set +a; go run ./cmd/sinkron
