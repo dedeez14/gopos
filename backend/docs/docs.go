@@ -728,6 +728,189 @@ const docTemplate = `{
                 }
             }
         },
+        "/metode-bayar": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metode-bayar"
+                ],
+                "summary": "Daftar metode bayar dasar (bank/e-wallet/QRIS statis)",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "true = hanya yang aktif (dipakai aplikasi kasir)",
+                        "name": "aktif",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/http.MetodeResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metode-bayar"
+                ],
+                "summary": "Tambah metode bayar (Owner/Manager)",
+                "parameters": [
+                    {
+                        "description": "Metode",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanMetodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.MetodeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/metode-bayar/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metode-bayar"
+                ],
+                "summary": "Ubah metode bayar (Owner/Manager)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Metode",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanMetodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.MetodeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metode-bayar"
+                ],
+                "summary": "Hapus metode bayar (riwayat transaksi tetap aman)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
         "/pelanggan": {
             "get": {
                 "security": [
@@ -2628,6 +2811,38 @@ const docTemplate = `{
                 }
             }
         },
+        "http.MetodeResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "atas_nama": {
+                    "type": "string"
+                },
+                "gambar_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "instruksi": {
+                    "type": "string"
+                },
+                "jenis": {
+                    "type": "string"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "nomor": {
+                    "type": "string"
+                },
+                "urutan": {
+                    "type": "integer"
+                }
+            }
+        },
         "http.OpnameRequest": {
             "type": "object",
             "required": [
@@ -2901,6 +3116,52 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 2
+                }
+            }
+        },
+        "http.SimpanMetodeRequest": {
+            "type": "object",
+            "required": [
+                "aktif",
+                "jenis",
+                "nama"
+            ],
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "atas_nama": {
+                    "type": "string",
+                    "maxLength": 120
+                },
+                "gambar_url": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "instruksi": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "jenis": {
+                    "type": "string",
+                    "enum": [
+                        "BANK",
+                        "EWALLET",
+                        "QRIS"
+                    ]
+                },
+                "nama": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "minLength": 1
+                },
+                "nomor": {
+                    "type": "string",
+                    "maxLength": 60
+                },
+                "urutan": {
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         },

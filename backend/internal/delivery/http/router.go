@@ -26,6 +26,7 @@ func DaftarkanRute(
 	inventoryUC *usecase.InventoryUsecase,
 	usahaUC *usecase.UsahaUsecase,
 	pengaturanUC *usecase.PengaturanUsecase,
+	metodeUC *usecase.MetodePembayaranUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
@@ -35,6 +36,7 @@ func DaftarkanRute(
 	inventoryH := NewInventoryHandler(inventoryUC)
 	usahaH := NewUsahaHandler(usahaUC)
 	pengaturanH := NewPengaturanHandler(pengaturanUC)
+	metodeH := NewMetodePembayaranHandler(metodeUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -105,6 +107,13 @@ func DaftarkanRute(
 	// TULIS khusus Owner/Manager.
 	privat.GET("/pengaturan", pengaturanH.Ambil, appmw.ButuhIzin(domain.PermKasir))
 	privat.PUT("/pengaturan", pengaturanH.Perbarui, appmw.ButuhIzin(domain.PermPengaturanKelola))
+
+	// Metode bayar dasar (bank/e-wallet/QRIS statis) — BACA kasir (app tampilkan
+	// pilihan bayar), TULIS Owner/Manager. Digerbang izin pengaturan (config merchant).
+	privat.GET("/metode-bayar", metodeH.Daftar, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/metode-bayar", metodeH.Buat, appmw.ButuhIzin(domain.PermPengaturanKelola))
+	privat.PUT("/metode-bayar/:id", metodeH.Perbarui, appmw.ButuhIzin(domain.PermPengaturanKelola))
+	privat.DELETE("/metode-bayar/:id", metodeH.Hapus, appmw.ButuhIzin(domain.PermPengaturanKelola))
 
 	// Usaha (tenant) — level PLATFORM, khusus SUPERADMIN.
 	privat.GET("/usahas", usahaH.Daftar, appmw.ButuhIzin(domain.PermUsahaKelola))

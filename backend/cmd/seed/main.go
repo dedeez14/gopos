@@ -41,7 +41,7 @@ func main() {
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
-		&domain.Pengaturan{},
+		&domain.Pengaturan{}, &domain.MetodePembayaran{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -152,6 +152,24 @@ func main() {
 			log.Fatal().Err(err).Msg("gagal membuat pengaturan default")
 		}
 		log.Info().Str("usaha", usaha.Nama).Msg("pengaturan default dibuat")
+	}
+
+	// ── metode bayar dasar contoh (bank + QRIS) ─────────────────────────
+	// Titik awal; isi rekening/QR asli lewat menu Pembayaran.
+	var adaMetode int64
+	db.Model(&domain.MetodePembayaran{}).Where("usaha_id = ?", usaha.ID).Count(&adaMetode)
+	if adaMetode == 0 {
+		metode := []domain.MetodePembayaran{
+			{Jenis: domain.BayarBank, Nama: "BCA", Nomor: "1234567890", AtasNama: "Nama Pemilik", Urutan: 1, Aktif: true},
+			{Jenis: domain.BayarEwallet, Nama: "OVO", Nomor: "081200000000", AtasNama: "Nama Pemilik", Urutan: 2, Aktif: true},
+		}
+		for _, m := range metode {
+			m.UsahaID = usaha.ID
+			if err := db.Create(&m).Error; err != nil {
+				log.Fatal().Err(err).Msg("gagal membuat metode bayar contoh")
+			}
+			log.Info().Str("metode", m.Nama).Msg("metode bayar contoh dibuat")
+		}
 	}
 
 	log.Info().Msg("seed selesai — semua data ini bisa diubah/dihapus lewat admin panel")

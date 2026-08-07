@@ -181,6 +181,27 @@ definitions:
     - email
     - password
     type: object
+  http.MetodeResponse:
+    properties:
+      aktif:
+        type: boolean
+      atas_nama:
+        type: string
+      gambar_url:
+        type: string
+      id:
+        type: integer
+      instruksi:
+        type: string
+      jenis:
+        type: string
+      nama:
+        type: string
+      nomor:
+        type: string
+      urutan:
+        type: integer
+    type: object
   http.OpnameRequest:
     properties:
       keterangan:
@@ -364,6 +385,40 @@ definitions:
         minLength: 2
         type: string
     required:
+    - nama
+    type: object
+  http.SimpanMetodeRequest:
+    properties:
+      aktif:
+        type: boolean
+      atas_nama:
+        maxLength: 120
+        type: string
+      gambar_url:
+        maxLength: 255
+        type: string
+      instruksi:
+        maxLength: 255
+        type: string
+      jenis:
+        enum:
+        - BANK
+        - EWALLET
+        - QRIS
+        type: string
+      nama:
+        maxLength: 80
+        minLength: 1
+        type: string
+      nomor:
+        maxLength: 60
+        type: string
+      urutan:
+        minimum: 0
+        type: integer
+    required:
+    - aktif
+    - jenis
     - nama
     type: object
   http.SimpanPelangganRequest:
@@ -1109,6 +1164,111 @@ paths:
       summary: Produk paling laku (dari snapshot item transaksi)
       tags:
       - laporan
+  /metode-bayar:
+    get:
+      parameters:
+      - description: true = hanya yang aktif (dipakai aplikasi kasir)
+        in: query
+        name: aktif
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/http.MetodeResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar metode bayar dasar (bank/e-wallet/QRIS statis)
+      tags:
+      - metode-bayar
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Metode
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanMetodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.MetodeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah metode bayar (Owner/Manager)
+      tags:
+      - metode-bayar
+  /metode-bayar/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Hapus metode bayar (riwayat transaksi tetap aman)
+      tags:
+      - metode-bayar
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Metode
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanMetodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.MetodeResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Ubah metode bayar (Owner/Manager)
+      tags:
+      - metode-bayar
   /pelanggan:
     get:
       parameters:

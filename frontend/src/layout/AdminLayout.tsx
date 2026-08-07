@@ -6,6 +6,7 @@ import {
   ApartmentOutlined,
   BarChartOutlined,
   ContactsOutlined,
+  CreditCardOutlined,
   DashboardOutlined,
   DatabaseOutlined,
   FileTextOutlined,
@@ -35,6 +36,7 @@ const JUDUL: Record<string, string> = {
   '/pelanggan': 'Pelanggan',
   '/users': 'Pengguna',
   '/pengaturan': 'Pengaturan Usaha',
+  '/metode-bayar': 'Metode Pembayaran',
 };
 
 export default function AdminLayout() {
@@ -63,7 +65,10 @@ export default function AdminLayout() {
     { key: '/pelanggan', icon: <ContactsOutlined />, label: 'Pelanggan' },
     { key: '/users', icon: <TeamOutlined />, label: 'Pengguna' },
     ...(['OWNER', 'MANAGER', 'SUPERADMIN'].includes(auth.role())
-      ? [{ key: '/pengaturan', icon: <SettingOutlined />, label: 'Pengaturan' }]
+      ? [
+          { key: '/metode-bayar', icon: <CreditCardOutlined />, label: 'Pembayaran' },
+          { key: '/pengaturan', icon: <SettingOutlined />, label: 'Pengaturan' },
+        ]
       : []),
   ];
 
