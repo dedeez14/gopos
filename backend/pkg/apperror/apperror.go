@@ -31,9 +31,6 @@ func Status(err error) int {
 		errors.Is(err, domain.ErrSesiBukanMilik),
 		errors.Is(err, domain.ErrTrxBukanMilik):
 		return http.StatusForbidden
-	case errors.Is(err, domain.ErrJenisBayarTakDikenal),
-		errors.Is(err, domain.ErrDataBayarKurang):
-		return http.StatusUnprocessableEntity
 	case errors.Is(err, domain.ErrSesiSudahBuka),
 		errors.Is(err, domain.ErrSesiBelumBuka),
 		errors.Is(err, domain.ErrSesiSudahTutup),
@@ -43,8 +40,15 @@ func Status(err error) int {
 		errors.Is(err, domain.ErrSesiTrxSudahTutup),
 		errors.Is(err, domain.ErrTeleponTerpakai),
 		errors.Is(err, domain.ErrKodeUsahaTerpakai),
+		errors.Is(err, domain.ErrGatewayBelumSiap),
 		errors.Is(err, domain.ErrHoldPenuh):
 		return http.StatusConflict
+	case errors.Is(err, domain.ErrJenisBayarTakDikenal),
+		errors.Is(err, domain.ErrDataBayarKurang),
+		errors.Is(err, domain.ErrNominalTakSah):
+		return http.StatusUnprocessableEntity
+	case errors.Is(err, domain.ErrGatewayUpstream):
+		return http.StatusBadGateway
 	default:
 		return http.StatusInternalServerError
 	}

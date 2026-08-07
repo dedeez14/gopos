@@ -37,6 +37,7 @@ import (
 	deliveryhttp "github.com/tuleh-pos/server/internal/delivery/http"
 	appmw "github.com/tuleh-pos/server/internal/delivery/http/middleware"
 	"github.com/tuleh-pos/server/internal/domain"
+	midtransklien "github.com/tuleh-pos/server/internal/gateway/midtrans"
 	pgrepo "github.com/tuleh-pos/server/internal/repository/postgres"
 	redisrepo "github.com/tuleh-pos/server/internal/repository/redis"
 	"github.com/tuleh-pos/server/internal/usecase"
@@ -77,6 +78,7 @@ func main() {
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
 		&domain.Pengaturan{}, &domain.MetodePembayaran{}, &domain.GatewayMidtrans{},
+		&domain.TagihanQris{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -100,7 +102,7 @@ func main() {
 	for _, tabel := range []string{
 		"users", "kategoris", "produks", "sesi_kasirs", "transaksis",
 		"pelanggans", "holds", "pengeluarans", "stok_logs", "pengaturans",
-		"metode_pembayarans", "gateway_midtrans",
+		"metode_pembayarans", "gateway_midtrans", "tagihan_qris",
 	} {
 		if err := db.Exec("UPDATE "+tabel+" SET usaha_id = ? WHERE usaha_id = 0", usahaDefault.ID).Error; err != nil {
 			log.Fatal().Err(err).Str("tabel", tabel).Msg("backfill usaha gagal")
@@ -154,6 +156,8 @@ func main() {
 	}
 	gatewayRepo := pgrepo.NewGatewayMidtransRepository(db)
 	gatewayUC := usecase.NewGatewayUsecase(gatewayRepo, usahaRepo, kotak)
+	tagihanRepo := pgrepo.NewTagihanQrisRepository(db)
+	tagihanUC := usecase.NewTagihanUsecase(tagihanRepo, gatewayUC, midtransklien.NewKlien())
 
 	semaiAdmin(db, cfg, usahaDefault.ID, log)
 
@@ -236,7 +240,7 @@ func main() {
 		log.Info().Str("dist", cfg.AdminDist).Msg("admin panel disajikan dari server ini")
 	}
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC, pengaturanUC, metodeUC, gatewayUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC, pengaturanUC, metodeUC, gatewayUC, tagihanUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

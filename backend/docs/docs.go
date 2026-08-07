@@ -1240,6 +1240,114 @@ const docTemplate = `{
                 }
             }
         },
+        "/pembayaran/qris": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Butuh gateway SIAP (modul aktif platform + saklar merchant + server key). Kegagalan Midtrans → 502.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "qris"
+                ],
+                "summary": "Buat tagihan QRIS dinamis (Midtrans)",
+                "parameters": [
+                    {
+                        "description": "Nominal (rupiah)",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.BuatQrisRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TagihanResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Gateway belum siap",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    },
+                    "502": {
+                        "description": "Midtrans menolak",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/pembayaran/qris/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "qris"
+                ],
+                "summary": "Poll status tagihan QRIS (PENDING → PAID/EXPIRED/FAILED)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID tagihan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.TagihanResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/pengaturan": {
             "get": {
                 "security": [
@@ -2718,6 +2826,17 @@ const docTemplate = `{
                 }
             }
         },
+        "http.BuatQrisRequest": {
+            "type": "object",
+            "required": [
+                "nominal"
+            ],
+            "properties": {
+                "nominal": {
+                    "type": "integer"
+                }
+            }
+        },
         "http.BuatUsahaRequest": {
             "type": "object",
             "required": [
@@ -3676,6 +3795,32 @@ const docTemplate = `{
                 },
                 "total_pajak": {
                     "type": "number"
+                }
+            }
+        },
+        "http.TagihanResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "kedaluwarsa": {
+                    "type": "string"
+                },
+                "nominal": {
+                    "type": "integer"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "qr_string": {
+                    "type": "string"
+                },
+                "qr_url": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

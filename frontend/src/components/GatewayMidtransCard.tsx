@@ -21,7 +21,7 @@ import {
   message,
 } from 'antd';
 import { pesanError } from '../api/client';
-import { ambilGateway, simpanGateway, type KonfigMidtrans, type SimpanGateway } from '../api/gateway';
+import { ambilGateway, buatQris, simpanGateway, type KonfigMidtrans, type SimpanGateway } from '../api/gateway';
 
 type FormGateway = Omit<SimpanGateway, 'server_key'> & { server_key?: string };
 
@@ -49,6 +49,14 @@ export default function GatewayMidtransCard() {
       qc.setQueryData(['gateway-midtrans'], baru);
       form.setFieldValue('server_key', '');
     },
+    onError: (e) => message.error(pesanError(e)),
+  });
+
+  // Tes koneksi: buat QRIS Rp1.000 sungguhan — cara cepat memastikan key benar.
+  const uji = useMutation({
+    mutationFn: () => buatQris(1000),
+    onSuccess: (t) =>
+      message.success(`Koneksi OK — QRIS terbuat (${t.order_id}, status ${t.status}).`),
     onError: (e) => message.error(pesanError(e)),
   });
 
@@ -142,9 +150,16 @@ export default function GatewayMidtransCard() {
           />
         </Form.Item>
 
-        <Button type="primary" htmlType="submit" loading={simpan.isPending}>
-          Simpan Konfigurasi
-        </Button>
+        <Space wrap>
+          <Button type="primary" htmlType="submit" loading={simpan.isPending}>
+            Simpan Konfigurasi
+          </Button>
+          {k.siap && (
+            <Button onClick={() => uji.mutate()} loading={uji.isPending}>
+              Tes koneksi (QRIS Rp1.000)
+            </Button>
+          )}
+        </Space>
       </Form>
     </Card>
   );

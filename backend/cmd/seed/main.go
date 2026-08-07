@@ -42,6 +42,7 @@ func main() {
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
 		&domain.Pengaturan{}, &domain.MetodePembayaran{}, &domain.GatewayMidtrans{},
+		&domain.TagihanQris{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}

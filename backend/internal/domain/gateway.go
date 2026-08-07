@@ -25,9 +25,36 @@ type GatewayMidtrans struct {
 	UpdatedAt    time.Time
 }
 
-// ErrModulMidtransMati: merchant mencoba mengatur gateway padahal platform
-// belum mengaktifkan modul untuk usahanya.
-var ErrModulMidtransMati = errors.New("modul Midtrans belum diaktifkan platform untuk usaha ini")
+var (
+	// ErrModulMidtransMati: merchant mencoba mengatur/memakai gateway padahal
+	// platform belum mengaktifkan modul untuk usahanya.
+	ErrModulMidtransMati = errors.New("modul Midtrans belum diaktifkan platform untuk usaha ini")
+	// ErrGatewayBelumSiap: modul aktif tapi konfigurasi belum lengkap/aktif
+	// (server key kosong atau saklar merchant mati).
+	ErrGatewayBelumSiap = errors.New("gateway Midtrans belum siap — aktifkan dan isi server key")
+	// ErrGatewayUpstream: kegagalan saat memanggil API Midtrans (jaringan atau
+	// status_code non-2xx di body). Dibungkus di atas error asli.
+	ErrGatewayUpstream = errors.New("gateway pembayaran menolak permintaan")
+	// ErrNominalTakSah: nominal tagihan QRIS harus > 0.
+	ErrNominalTakSah = errors.New("nominal tagihan tidak sah")
+)
+
+// HasilQris — hasil charge QRIS dari Midtrans (bentuk domain, bebas HTTP).
+type HasilQris struct {
+	OrderID        string
+	TransactionID  string
+	QrString       string // payload QRIS (bisa dirender jadi QR oleh klien)
+	QrURL          string // URL gambar QR (action generate-qr-code)
+	StatusMentah   string // transaction_status mentah dari Midtrans
+	KedaluwarsaISO string // expiry_time mentah
+}
+
+// GatewayCharger — PORT ke penyedia pembayaran (Midtrans). Implementasi konkret
+// (HTTP) hidup di internal/gateway/midtrans; domain hanya tahu kontraknya.
+type GatewayCharger interface {
+	ChargeQris(ctx context.Context, serverKey, env, orderID string, nominal int64) (HasilQris, error)
+	StatusTransaksi(ctx context.Context, serverKey, env, orderID string) (statusMentah string, err error)
+}
 
 // GatewayMidtransRepository — singleton per usaha (di-scope usaha_id).
 type GatewayMidtransRepository interface {

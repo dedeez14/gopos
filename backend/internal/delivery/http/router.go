@@ -28,6 +28,7 @@ func DaftarkanRute(
 	pengaturanUC *usecase.PengaturanUsecase,
 	metodeUC *usecase.MetodePembayaranUsecase,
 	gatewayUC *usecase.GatewayUsecase,
+	tagihanUC *usecase.TagihanUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
@@ -39,6 +40,7 @@ func DaftarkanRute(
 	pengaturanH := NewPengaturanHandler(pengaturanUC)
 	metodeH := NewMetodePembayaranHandler(metodeUC)
 	gatewayH := NewGatewayHandler(gatewayUC)
+	qrisH := NewQrisHandler(tagihanUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -122,6 +124,10 @@ func DaftarkanRute(
 	privat.GET("/gateway/midtrans", gatewayH.AmbilKonfig, appmw.ButuhIzin(domain.PermPengaturanKelola))
 	privat.PUT("/gateway/midtrans", gatewayH.SimpanKonfig, appmw.ButuhIzin(domain.PermPengaturanKelola))
 	privat.GET("/gateway/midtrans/status", gatewayH.Status, appmw.ButuhIzin(domain.PermKasir))
+
+	// QRIS dinamis (Midtrans) — alat kasir: buat tagihan lalu poll status.
+	privat.POST("/pembayaran/qris", qrisH.BuatQris, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/pembayaran/qris/:id", qrisH.CekQris, appmw.ButuhIzin(domain.PermKasir))
 
 	// Usaha (tenant) — level PLATFORM, khusus SUPERADMIN.
 	privat.GET("/usahas", usahaH.Daftar, appmw.ButuhIzin(domain.PermUsahaKelola))

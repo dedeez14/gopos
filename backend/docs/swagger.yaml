@@ -24,6 +24,13 @@ definitions:
       terjual:
         type: number
     type: object
+  http.BuatQrisRequest:
+    properties:
+      nominal:
+        type: integer
+    required:
+    - nominal
+    type: object
   http.BuatUsahaRequest:
     properties:
       kode:
@@ -692,6 +699,23 @@ definitions:
         type: number
       total_pajak:
         type: number
+    type: object
+  http.TagihanResponse:
+    properties:
+      id:
+        type: integer
+      kedaluwarsa:
+        type: string
+      nominal:
+        type: integer
+      order_id:
+        type: string
+      qr_string:
+        type: string
+      qr_url:
+        type: string
+      status:
+        type: string
     type: object
   http.TokenResponse:
     properties:
@@ -1515,6 +1539,69 @@ paths:
       summary: Quick add pelanggan (nama + WA) — alat kasir
       tags:
       - pelanggan
+  /pembayaran/qris:
+    post:
+      consumes:
+      - application/json
+      description: Butuh gateway SIAP (modul aktif platform + saklar merchant + server
+        key). Kegagalan Midtrans → 502.
+      parameters:
+      - description: Nominal (rupiah)
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.BuatQrisRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.TagihanResponse'
+              type: object
+        "409":
+          description: Gateway belum siap
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+        "502":
+          description: Midtrans menolak
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Buat tagihan QRIS dinamis (Midtrans)
+      tags:
+      - qris
+  /pembayaran/qris/{id}:
+    get:
+      parameters:
+      - description: ID tagihan
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.TagihanResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Poll status tagihan QRIS (PENDING → PAID/EXPIRED/FAILED)
+      tags:
+      - qris
   /pengaturan:
     get:
       produces:
