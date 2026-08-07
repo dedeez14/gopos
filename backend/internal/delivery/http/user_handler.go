@@ -24,13 +24,13 @@ func NewUserHandler(users *usecase.UserUsecase) *UserHandler {
 // langsung supaya PasswordHash mustahil bocor dan bentuk API stabil walau
 // entitas berubah.
 type UserResponse struct {
-	ID        uint   `json:"id"`
-	Nama      string `json:"nama"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	Aktif     bool   `json:"aktif"`
-	DibuatKe  string `json:"dibuat_pada"`
-	DiubahKe  string `json:"diubah_pada"`
+	ID       uint   `json:"id"`
+	Nama     string `json:"nama"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	Aktif    bool   `json:"aktif"`
+	DibuatKe string `json:"dibuat_pada"`
+	DiubahKe string `json:"diubah_pada"`
 }
 
 func keUserResponse(u *domain.User) UserResponse {

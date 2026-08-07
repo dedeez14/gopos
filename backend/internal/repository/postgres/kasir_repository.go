@@ -112,7 +112,7 @@ func (r *TransaksiRepository) Checkout(ctx context.Context, t *domain.Transaksi,
 
 func (r *TransaksiRepository) CariByID(ctx context.Context, id uint) (*domain.Transaksi, error) {
 	var t domain.Transaksi
-	err := r.db.WithContext(ctx).Preload("Items").Preload("User").First(&t, id).Error
+	err := r.db.WithContext(ctx).Preload("Items").Preload("User").Preload("Pelanggan").First(&t, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -121,7 +121,7 @@ func (r *TransaksiRepository) CariByID(ctx context.Context, id uint) (*domain.Tr
 
 func (r *TransaksiRepository) CariByIdempotency(ctx context.Context, key string) (*domain.Transaksi, error) {
 	var t domain.Transaksi
-	err := r.db.WithContext(ctx).Preload("Items").Preload("User").
+	err := r.db.WithContext(ctx).Preload("Items").Preload("User").Preload("Pelanggan").
 		Where("idempotency_key = ?", key).First(&t).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
@@ -147,7 +147,7 @@ func (r *TransaksiRepository) Daftar(ctx context.Context, f domain.FilterTransak
 	}
 
 	var rows []domain.Transaksi
-	err := q.Preload("Items").Preload("User").Order("id DESC").
+	err := q.Preload("Items").Preload("User").Preload("Pelanggan").Order("id DESC").
 		Offset((f.Halaman - 1) * f.PerHal).Limit(f.PerHal).Find(&rows).Error
 
 	return rows, total, err

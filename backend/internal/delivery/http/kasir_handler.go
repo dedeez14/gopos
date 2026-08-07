@@ -79,6 +79,7 @@ type StrukResponse struct {
 	Tanggal        string      `json:"tanggal"`
 	Status         string      `json:"status"`
 	Kasir          string      `json:"kasir"`
+	Pelanggan      string      `json:"pelanggan"`
 	TipePembayaran string      `json:"tipe_pembayaran"`
 	Subtotal       float64     `json:"subtotal"`
 	TotalDiskon    float64     `json:"total_diskon"`
@@ -103,6 +104,9 @@ func keStruk(t *domain.Transaksi) StrukResponse {
 	}
 	if t.User != nil {
 		res.Kasir = t.User.Nama
+	}
+	if t.Pelanggan != nil {
+		res.Pelanggan = t.Pelanggan.Nama
 	}
 	for _, it := range t.Items {
 		res.Items = append(res.Items, ItemStruk{
@@ -268,6 +272,7 @@ type CheckoutRequest struct {
 	Dibayar        float64               `json:"dibayar" validate:"min=0"`
 	Catatan        string                `json:"catatan" validate:"omitempty,max=500"`
 	IdempotencyKey string                `json:"idempotency_key" validate:"omitempty,max=80"`
+	PelangganID    uint                  `json:"pelanggan_id"`
 }
 
 // Checkout godoc
@@ -304,7 +309,7 @@ func (h *KasirHandler) Checkout(c echo.Context) error {
 	t, err := h.transaksi.Checkout(c.Request().Context(), userID(c), usecase.InputCheckout{
 		Items: items, DiskonPersen: req.DiskonPersen, DiskonNominal: req.DiskonNominal,
 		TipePembayaran: req.TipePembayaran, Dibayar: req.Dibayar,
-		Catatan: req.Catatan, IdempotencyKey: kunci,
+		Catatan: req.Catatan, IdempotencyKey: kunci, PelangganID: req.PelangganID,
 	})
 	if err != nil {
 		return respond.Gagal(c, apperror.Status(err), apperror.Pesan(err), nil)

@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import ProdukPage from './pages/ProdukPage';
 import TransaksiPage from './pages/TransaksiPage';
+import LaporanPage from './pages/LaporanPage';
+import PelangganPage from './pages/PelangganPage';
 import UsersPage from './pages/UsersPage';
 import { auth } from './lib/auth';
 
@@ -28,6 +30,8 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/produk" element={<ProdukPage />} />
         <Route path="/transaksi" element={<TransaksiPage />} />
+        <Route path="/laporan" element={<LaporanPage />} />
+        <Route path="/pelanggan" element={<PelangganPage />} />
         <Route path="/users" element={<UsersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

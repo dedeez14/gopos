@@ -30,7 +30,9 @@ func Status(err error) int {
 	case errors.Is(err, domain.ErrSesiSudahBuka),
 		errors.Is(err, domain.ErrSesiBelumBuka),
 		errors.Is(err, domain.ErrSesiSudahTutup),
-		errors.Is(err, domain.ErrProdukNonaktif):
+		errors.Is(err, domain.ErrProdukNonaktif),
+		errors.Is(err, domain.ErrTeleponTerpakai),
+		errors.Is(err, domain.ErrHoldPenuh):
 		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError

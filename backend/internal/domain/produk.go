@@ -47,14 +47,14 @@ type Produk struct {
 	// GORM MENGHILANGKAN nilai zero (false) saat INSERT sehingga default DB
 	// yang menang dan aturan "JASA selalu kelola_stok=false" dikhianati
 	// diam-diam. Tanpa tag, GORM selalu menulis nilai eksplisit.
-	Favorit      bool    `gorm:"not null"`
-	KelolaStok   bool    `gorm:"not null"`
-	Stok         float64 `gorm:"type:numeric(15,3);not null;default:0"`
-	KategoriID   *uint   `gorm:"index"`
-	Kategori     *Kategori
-	Aktif        bool `gorm:"not null"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	Favorit    bool    `gorm:"not null"`
+	KelolaStok bool    `gorm:"not null"`
+	Stok       float64 `gorm:"type:numeric(15,3);not null;default:0"`
+	KategoriID *uint   `gorm:"index"`
+	Kategori   *Kategori
+	Aktif      bool `gorm:"not null"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 // PromoAktif: harga promo terisi DAN tanggal `pada` berada dalam periode

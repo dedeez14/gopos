@@ -10,11 +10,13 @@ import (
 // ada status menggantung di v1 (batal/refund menyusul sebagai dokumen
 // terpisah, bukan mutasi diam-diam).
 type Transaksi struct {
-	ID             uint    `gorm:"primaryKey"`
-	Nomor          string  `gorm:"size:30;uniqueIndex;not null"`
-	SesiKasirID    uint    `gorm:"index;not null"`
-	UserID         uint    `gorm:"index;not null"`
+	ID             uint   `gorm:"primaryKey"`
+	Nomor          string `gorm:"size:30;uniqueIndex;not null"`
+	SesiKasirID    uint   `gorm:"index;not null"`
+	UserID         uint   `gorm:"index;not null"`
 	User           *User
+	PelangganID    *uint `gorm:"index"`
+	Pelanggan      *Pelanggan
 	IdempotencyKey *string `gorm:"size:80;uniqueIndex"`
 	Tanggal        time.Time
 	Subtotal       float64 `gorm:"type:numeric(15,2);not null"`
@@ -49,10 +51,10 @@ type TransaksiItem struct {
 }
 
 const (
-	TrxSelesai    = "SELESAI"
-	TipeTunai     = "TUNAI"
-	TipeTransfer  = "TRANSFER"
-	TipeQris      = "QRIS"
+	TrxSelesai   = "SELESAI"
+	TipeTunai    = "TUNAI"
+	TipeTransfer = "TRANSFER"
+	TipeQris     = "QRIS"
 )
 
 var ErrProdukNonaktif = errors.New("produk sudah dinonaktifkan")

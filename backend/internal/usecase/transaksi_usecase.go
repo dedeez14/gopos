@@ -25,14 +25,16 @@ type TransaksiUsecase struct {
 	transaksi domain.TransaksiRepository
 	sesi      domain.SesiRepository
 	produk    domain.ProdukRepository
+	pelanggan domain.PelangganRepository
 }
 
 func NewTransaksiUsecase(
 	transaksi domain.TransaksiRepository,
 	sesi domain.SesiRepository,
 	produk domain.ProdukRepository,
+	pelanggan domain.PelangganRepository,
 ) *TransaksiUsecase {
-	return &TransaksiUsecase{transaksi: transaksi, sesi: sesi, produk: produk}
+	return &TransaksiUsecase{transaksi: transaksi, sesi: sesi, produk: produk, pelanggan: pelanggan}
 }
 
 // ItemCheckout — baris keranjang. Harga 0 = pakai harga efektif katalog
@@ -54,6 +56,7 @@ type InputCheckout struct {
 	Dibayar        float64
 	Catatan        string
 	IdempotencyKey string
+	PelangganID    uint // 0 = tanpa pelanggan
 }
 
 // Checkout memproses penjualan. Wajib ada sesi BUKA milik kasir; kunci
@@ -70,6 +73,16 @@ func (uc *TransaksiUsecase) Checkout(ctx context.Context, userID uint, in InputC
 		} else if !errors.Is(err, domain.ErrTidakDitemukan) {
 			return nil, err
 		}
+	}
+
+	// Pelanggan opsional — id asing ditolak, bukan diterima buta.
+	var pelangganID *uint
+	if in.PelangganID != 0 {
+		if _, err := uc.pelanggan.CariByID(ctx, in.PelangganID); err != nil {
+			return nil, err
+		}
+		id := in.PelangganID
+		pelangganID = &id
 	}
 
 	kini := time.Now()
@@ -130,6 +143,7 @@ func (uc *TransaksiUsecase) Checkout(ctx context.Context, userID uint, in InputC
 		Nomor:          fmt.Sprintf("POSTMP-%d", kini.UnixNano()), // final diisi repo: POS-<tgl>-<id>
 		SesiKasirID:    sesi.ID,
 		UserID:         userID,
+		PelangganID:    pelangganID,
 		Tanggal:        kini,
 		Subtotal:       bulatkan(subtotal),
 		TotalDiskon:    bulatkan(totalDiskon),
@@ -152,7 +166,8 @@ func (uc *TransaksiUsecase) Checkout(ctx context.Context, userID uint, in InputC
 	if err := uc.transaksi.Checkout(ctx, t, potongStok); err != nil {
 		return nil, err
 	}
-	return t, nil
+	// Muat ulang supaya relasi (Pelanggan, User) terisi di struk.
+	return uc.transaksi.CariByID(ctx, t.ID)
 }
 
 func (uc *TransaksiUsecase) Ambil(ctx context.Context, id uint) (*domain.Transaksi, error) {

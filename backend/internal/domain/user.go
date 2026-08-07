@@ -30,19 +30,20 @@ const (
 type Permission string
 
 const (
-	PermUserLihat    Permission = "users.lihat"
-	PermUserKelola   Permission = "users.kelola"
-	PermLaporan      Permission = "laporan.lihat"
-	PermKasir        Permission = "kasir.operasi"
-	PermProdukKelola Permission = "produk.kelola" // CRUD katalog; BACA katalog cukup PermKasir
+	PermUserLihat       Permission = "users.lihat"
+	PermUserKelola      Permission = "users.kelola"
+	PermLaporan         Permission = "laporan.lihat"
+	PermKasir           Permission = "kasir.operasi"
+	PermProdukKelola    Permission = "produk.kelola" // CRUD katalog; BACA katalog cukup PermKasir
+	PermPelangganKelola Permission = "pelanggan.kelola"
 )
 
 // RolePermissions memetakan peran → izin. SATU sumber kebenaran RBAC;
 // middleware dan UI sama-sama membacanya. Fail-closed: peran yang tidak
 // terdaftar tidak punya izin apa pun.
 var RolePermissions = map[Role][]Permission{
-	RoleOwner:   {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola},
-	RoleManager: {PermUserLihat, PermLaporan, PermKasir, PermProdukKelola},
+	RoleOwner:   {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola},
+	RoleManager: {PermUserLihat, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola},
 	RoleKasir:   {PermKasir},
 }
 
@@ -60,12 +61,12 @@ func (r Role) Punya(p Permission) bool {
 // server — serialisasi ke klien memakai DTO di lapisan delivery, bukan
 // struct ini langsung.
 type User struct {
-	ID           uint      `gorm:"primaryKey"`
-	Nama         string    `gorm:"size:150;not null"`
-	Email        string    `gorm:"size:150;uniqueIndex;not null"`
-	PasswordHash string    `gorm:"size:100;not null"`
-	Role         Role      `gorm:"size:20;not null;default:KASIR"`
-	Aktif        bool      `gorm:"not null;default:true"`
+	ID           uint   `gorm:"primaryKey"`
+	Nama         string `gorm:"size:150;not null"`
+	Email        string `gorm:"size:150;uniqueIndex;not null"`
+	PasswordHash string `gorm:"size:100;not null"`
+	Role         Role   `gorm:"size:20;not null;default:KASIR"`
+	Aktif        bool   `gorm:"not null;default:true"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

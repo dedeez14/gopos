@@ -4,9 +4,9 @@ import (
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
+	appmw "github.com/tuleh-pos/server/internal/delivery/http/middleware"
 	"github.com/tuleh-pos/server/internal/domain"
 	"github.com/tuleh-pos/server/internal/usecase"
-	appmw "github.com/tuleh-pos/server/internal/delivery/http/middleware"
 )
 
 // DaftarkanRute memasang seluruh endpoint. SATU file peta rute — programmer
@@ -19,11 +19,16 @@ func DaftarkanRute(
 	kategoriUC *usecase.KategoriUsecase,
 	sesiUC *usecase.SesiUsecase,
 	transaksiUC *usecase.TransaksiUsecase,
+	laporanUC *usecase.LaporanUsecase,
+	pengeluaranUC *usecase.PengeluaranUsecase,
+	pelangganUC *usecase.PelangganUsecase,
+	holdUC *usecase.HoldUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
 	produkH := NewProdukHandler(produkUC, kategoriUC)
 	kasirH := NewKasirHandler(sesiUC, transaksiUC)
+	laporanH := NewLaporanHandler(laporanUC, pengeluaranUC, pelangganUC, holdUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -69,4 +74,23 @@ func DaftarkanRute(
 	privat.POST("/transaksi/checkout", kasirH.Checkout, appmw.ButuhIzin(domain.PermKasir))
 	privat.GET("/transaksi", kasirH.DaftarTransaksi, appmw.ButuhIzin(domain.PermKasir))
 	privat.GET("/transaksi/:id", kasirH.AmbilTransaksi, appmw.ButuhIzin(domain.PermKasir))
+
+	// Laporan & pengeluaran — khusus pemegang izin laporan (O/M).
+	privat.GET("/laporan/keuangan", laporanH.Keuangan, appmw.ButuhIzin(domain.PermLaporan))
+	privat.GET("/laporan/penjualan-harian", laporanH.PenjualanHarian, appmw.ButuhIzin(domain.PermLaporan))
+	privat.GET("/laporan/produk-terlaris", laporanH.ProdukTerlaris, appmw.ButuhIzin(domain.PermLaporan))
+	privat.GET("/pengeluaran", laporanH.DaftarPengeluaran, appmw.ButuhIzin(domain.PermLaporan))
+	privat.POST("/pengeluaran", laporanH.CatatPengeluaran, appmw.ButuhIzin(domain.PermLaporan))
+	privat.DELETE("/pengeluaran/:id", laporanH.HapusPengeluaran, appmw.ButuhIzin(domain.PermLaporan))
+
+	// Pelanggan: quick-add & baca = alat kasir; ubah/nonaktif = manajemen.
+	privat.GET("/pelanggan", laporanH.DaftarPelanggan, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/pelanggan/quick", laporanH.QuickPelanggan, appmw.ButuhIzin(domain.PermKasir))
+	privat.PUT("/pelanggan/:id", laporanH.PerbaruiPelanggan, appmw.ButuhIzin(domain.PermPelangganKelola))
+	privat.DELETE("/pelanggan/:id", laporanH.HapusPelanggan, appmw.ButuhIzin(domain.PermPelangganKelola))
+
+	// Hold — parkir keranjang, alat harian kasir.
+	privat.GET("/hold", laporanH.DaftarHold, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/hold", laporanH.SimpanHold, appmw.ButuhIzin(domain.PermKasir))
+	privat.DELETE("/hold/:id", laporanH.HapusHold, appmw.ButuhIzin(domain.PermKasir))
 }
