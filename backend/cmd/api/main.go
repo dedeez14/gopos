@@ -75,6 +75,7 @@ func main() {
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
+		&domain.Pengaturan{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -97,7 +98,7 @@ func main() {
 	}
 	for _, tabel := range []string{
 		"users", "kategoris", "produks", "sesi_kasirs", "transaksis",
-		"pelanggans", "holds", "pengeluarans", "stok_logs",
+		"pelanggans", "holds", "pengeluarans", "stok_logs", "pengaturans",
 	} {
 		if err := db.Exec("UPDATE "+tabel+" SET usaha_id = ? WHERE usaha_id = 0", usahaDefault.ID).Error; err != nil {
 			log.Fatal().Err(err).Str("tabel", tabel).Msg("backfill usaha gagal")
@@ -140,6 +141,8 @@ func main() {
 	holdUC := usecase.NewHoldUsecase(holdRepo)
 	stokRepo := pgrepo.NewStokRepository(db)
 	inventoryUC := usecase.NewInventoryUsecase(produkRepo, stokRepo, sesiRepo)
+	pengaturanRepo := pgrepo.NewPengaturanRepository(db)
+	pengaturanUC := usecase.NewPengaturanUsecase(pengaturanRepo, usahaRepo)
 
 	semaiAdmin(db, cfg, usahaDefault.ID, log)
 
@@ -222,7 +225,7 @@ func main() {
 		log.Info().Str("dist", cfg.AdminDist).Msg("admin panel disajikan dari server ini")
 	}
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC, pengaturanUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

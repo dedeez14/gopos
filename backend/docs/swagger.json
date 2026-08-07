@@ -922,6 +922,90 @@
                 }
             }
         },
+        "/pengaturan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pengaturan"
+                ],
+                "summary": "Pengaturan usaha (profil toko, struk, pajak) — dibuat default bila belum ada",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.PengaturanResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pengaturan"
+                ],
+                "summary": "Simpan pengaturan usaha (Owner/Manager)",
+                "parameters": [
+                    {
+                        "description": "Pengaturan",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanPengaturanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.PengaturanResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/pengeluaran": {
             "get": {
                 "security": [
@@ -2583,6 +2667,50 @@
                 }
             }
         },
+        "http.PengaturanResponse": {
+            "type": "object",
+            "properties": {
+                "alamat": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "mata_uang": {
+                    "type": "string"
+                },
+                "nama_toko": {
+                    "type": "string"
+                },
+                "pajak_aktif": {
+                    "type": "boolean"
+                },
+                "pajak_persen": {
+                    "type": "number"
+                },
+                "pembulatan": {
+                    "type": "integer"
+                },
+                "struk_footer": {
+                    "type": "string"
+                },
+                "struk_header": {
+                    "type": "string"
+                },
+                "tampilkan_logo": {
+                    "type": "boolean"
+                },
+                "telepon": {
+                    "type": "string"
+                },
+                "ukuran_kertas": {
+                    "type": "string"
+                }
+            }
+        },
         "http.PengeluaranResponse": {
             "type": "object",
             "properties": {
@@ -2795,6 +2923,74 @@
                 "telepon": {
                     "type": "string",
                     "maxLength": 25
+                }
+            }
+        },
+        "http.SimpanPengaturanRequest": {
+            "type": "object",
+            "required": [
+                "mata_uang",
+                "nama_toko",
+                "pajak_aktif",
+                "tampilkan_logo",
+                "ukuran_kertas"
+            ],
+            "properties": {
+                "alamat": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 150
+                },
+                "logo_url": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "mata_uang": {
+                    "type": "string",
+                    "maxLength": 8
+                },
+                "nama_toko": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 1
+                },
+                "pajak_aktif": {
+                    "type": "boolean"
+                },
+                "pajak_persen": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "pembulatan": {
+                    "type": "integer",
+                    "maximum": 100000,
+                    "minimum": 0
+                },
+                "struk_footer": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "struk_header": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "tampilkan_logo": {
+                    "type": "boolean"
+                },
+                "telepon": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "ukuran_kertas": {
+                    "type": "string",
+                    "enum": [
+                        "58mm",
+                        "80mm"
+                    ]
                 }
             }
         },

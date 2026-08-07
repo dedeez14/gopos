@@ -12,6 +12,7 @@ import LaporanPage from './pages/LaporanPage';
 import PelangganPage from './pages/PelangganPage';
 import UsahaPage from './pages/UsahaPage';
 import UsersPage from './pages/UsersPage';
+import PengaturanPage from './pages/PengaturanPage';
 import { auth } from './lib/auth';
 
 function RutePrivat({ children }: { children: ReactElement }) {
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/pelanggan" element={<PelangganPage />} />
         <Route path="/usaha" element={<UsahaPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/pengaturan" element={<PengaturanPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

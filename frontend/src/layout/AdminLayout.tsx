@@ -11,6 +11,7 @@ import {
   FileTextOutlined,
   LogoutOutlined,
   MenuOutlined,
+  SettingOutlined,
   ShoppingOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -33,6 +34,7 @@ const JUDUL: Record<string, string> = {
   '/laporan': 'Laporan',
   '/pelanggan': 'Pelanggan',
   '/users': 'Pengguna',
+  '/pengaturan': 'Pengaturan Usaha',
 };
 
 export default function AdminLayout() {
@@ -60,6 +62,9 @@ export default function AdminLayout() {
     { key: '/laporan', icon: <BarChartOutlined />, label: 'Laporan' },
     { key: '/pelanggan', icon: <ContactsOutlined />, label: 'Pelanggan' },
     { key: '/users', icon: <TeamOutlined />, label: 'Pengguna' },
+    ...(['OWNER', 'MANAGER', 'SUPERADMIN'].includes(auth.role())
+      ? [{ key: '/pengaturan', icon: <SettingOutlined />, label: 'Pengaturan' }]
+      : []),
   ];
 
   const isiNav = (

@@ -212,6 +212,35 @@ definitions:
       wa_link:
         type: string
     type: object
+  http.PengaturanResponse:
+    properties:
+      alamat:
+        type: string
+      email:
+        type: string
+      logo_url:
+        type: string
+      mata_uang:
+        type: string
+      nama_toko:
+        type: string
+      pajak_aktif:
+        type: boolean
+      pajak_persen:
+        type: number
+      pembulatan:
+        type: integer
+      struk_footer:
+        type: string
+      struk_header:
+        type: string
+      tampilkan_logo:
+        type: boolean
+      telepon:
+        type: string
+      ukuran_kertas:
+        type: string
+    type: object
   http.PengeluaranResponse:
     properties:
       id:
@@ -357,6 +386,57 @@ definitions:
     required:
     - aktif
     - nama
+    type: object
+  http.SimpanPengaturanRequest:
+    properties:
+      alamat:
+        maxLength: 255
+        type: string
+      email:
+        maxLength: 150
+        type: string
+      logo_url:
+        maxLength: 255
+        type: string
+      mata_uang:
+        maxLength: 8
+        type: string
+      nama_toko:
+        maxLength: 150
+        minLength: 1
+        type: string
+      pajak_aktif:
+        type: boolean
+      pajak_persen:
+        maximum: 100
+        minimum: 0
+        type: number
+      pembulatan:
+        maximum: 100000
+        minimum: 0
+        type: integer
+      struk_footer:
+        maxLength: 255
+        type: string
+      struk_header:
+        maxLength: 255
+        type: string
+      tampilkan_logo:
+        type: boolean
+      telepon:
+        maxLength: 30
+        type: string
+      ukuran_kertas:
+        enum:
+        - 58mm
+        - 80mm
+        type: string
+    required:
+    - mata_uang
+    - nama_toko
+    - pajak_aktif
+    - tampilkan_logo
+    - ukuran_kertas
     type: object
   http.SimpanProdukRequest:
     properties:
@@ -1145,6 +1225,53 @@ paths:
       summary: Quick add pelanggan (nama + WA) — alat kasir
       tags:
       - pelanggan
+  /pengaturan:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.PengaturanResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Pengaturan usaha (profil toko, struk, pajak) — dibuat default bila
+        belum ada
+      tags:
+      - pengaturan
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Pengaturan
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanPengaturanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.PengaturanResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Simpan pengaturan usaha (Owner/Manager)
+      tags:
+      - pengaturan
   /pengeluaran:
     get:
       parameters:

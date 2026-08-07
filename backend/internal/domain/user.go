@@ -35,18 +35,19 @@ const (
 	PermUserKelola      Permission = "users.kelola"
 	PermLaporan         Permission = "laporan.lihat"
 	PermKasir           Permission = "kasir.operasi"
-	PermProdukKelola    Permission = "produk.kelola" // CRUD katalog; BACA katalog cukup PermKasir
-	PermPelangganKelola Permission = "pelanggan.kelola"
-	PermUsahaKelola     Permission = "usaha.kelola" // level platform — SUPERADMIN saja
+	PermProdukKelola     Permission = "produk.kelola" // CRUD katalog; BACA katalog cukup PermKasir
+	PermPelangganKelola  Permission = "pelanggan.kelola"
+	PermPengaturanKelola Permission = "pengaturan.kelola" // profil toko, struk, pajak — O/M
+	PermUsahaKelola      Permission = "usaha.kelola"       // level platform — SUPERADMIN saja
 )
 
 // RolePermissions memetakan peran → izin. SATU sumber kebenaran RBAC;
 // middleware dan UI sama-sama membacanya. Fail-closed: peran yang tidak
 // terdaftar tidak punya izin apa pun.
 var RolePermissions = map[Role][]Permission{
-	RoleSuperadmin: {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola, PermUsahaKelola},
-	RoleOwner:      {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola},
-	RoleManager:    {PermUserLihat, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola},
+	RoleSuperadmin: {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola, PermPengaturanKelola, PermUsahaKelola},
+	RoleOwner:      {PermUserLihat, PermUserKelola, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola, PermPengaturanKelola},
+	RoleManager:    {PermUserLihat, PermLaporan, PermKasir, PermProdukKelola, PermPelangganKelola, PermPengaturanKelola},
 	RoleKasir:      {PermKasir},
 }
 

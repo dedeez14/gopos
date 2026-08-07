@@ -41,6 +41,7 @@ func main() {
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
+		&domain.Pengaturan{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -135,6 +136,22 @@ func main() {
 			log.Fatal().Err(err).Msg("gagal membuat produk contoh")
 		}
 		log.Info().Str("produk", p.Nama).Msg("produk contoh dibuat")
+	}
+
+	// ── pengaturan default (profil toko + struk) ────────────────────────
+	// Singleton per usaha; dibuat hanya bila belum ada supaya perubahan
+	// lewat panel tak tertimpa.
+	var adaPengaturan int64
+	db.Model(&domain.Pengaturan{}).Where("usaha_id = ?", usaha.ID).Count(&adaPengaturan)
+	if adaPengaturan == 0 {
+		p := domain.PengaturanDefault(usaha.ID, usaha.Nama)
+		p.Alamat = "Jl. Contoh No. 1, Jakarta"
+		p.Telepon = "0800-0000-0000"
+		p.StrukHeader = "Struk Pembelian"
+		if err := db.Create(&p).Error; err != nil {
+			log.Fatal().Err(err).Msg("gagal membuat pengaturan default")
+		}
+		log.Info().Str("usaha", usaha.Nama).Msg("pengaturan default dibuat")
 	}
 
 	log.Info().Msg("seed selesai — semua data ini bisa diubah/dihapus lewat admin panel")

@@ -25,6 +25,7 @@ func DaftarkanRute(
 	holdUC *usecase.HoldUsecase,
 	inventoryUC *usecase.InventoryUsecase,
 	usahaUC *usecase.UsahaUsecase,
+	pengaturanUC *usecase.PengaturanUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
@@ -33,6 +34,7 @@ func DaftarkanRute(
 	laporanH := NewLaporanHandler(laporanUC, pengeluaranUC, pelangganUC, holdUC)
 	inventoryH := NewInventoryHandler(inventoryUC)
 	usahaH := NewUsahaHandler(usahaUC)
+	pengaturanH := NewPengaturanHandler(pengaturanUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -98,6 +100,11 @@ func DaftarkanRute(
 	privat.POST("/inventory/stok-masuk", inventoryH.StokMasuk, appmw.ButuhIzin(domain.PermProdukKelola))
 	privat.POST("/inventory/opname", inventoryH.Opname, appmw.ButuhIzin(domain.PermProdukKelola))
 	privat.GET("/inventory/riwayat", inventoryH.Riwayat, appmw.ButuhIzin(domain.PermProdukKelola))
+
+	// Pengaturan usaha — BACA cukup kasir (aplikasi butuh struk/pajak default);
+	// TULIS khusus Owner/Manager.
+	privat.GET("/pengaturan", pengaturanH.Ambil, appmw.ButuhIzin(domain.PermKasir))
+	privat.PUT("/pengaturan", pengaturanH.Perbarui, appmw.ButuhIzin(domain.PermPengaturanKelola))
 
 	// Usaha (tenant) — level PLATFORM, khusus SUPERADMIN.
 	privat.GET("/usahas", usahaH.Daftar, appmw.ButuhIzin(domain.PermUsahaKelola))
