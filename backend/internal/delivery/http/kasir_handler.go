@@ -86,6 +86,7 @@ type StrukResponse struct {
 	DiskonPersen   float64     `json:"diskon_persen"`
 	DiskonNominal  float64     `json:"diskon_nominal"`
 	TotalPajak     float64     `json:"total_pajak"`
+	Pembulatan     float64     `json:"pembulatan"`
 	GrandTotal     float64     `json:"grand_total"`
 	Dibayar        float64     `json:"dibayar"`
 	Kembalian      float64     `json:"kembalian"`
@@ -99,7 +100,7 @@ func keStruk(t *domain.Transaksi) StrukResponse {
 		TipePembayaran: t.TipePembayaran,
 		Subtotal:       t.Subtotal, TotalDiskon: t.TotalDiskon,
 		DiskonPersen: t.DiskonPersen, DiskonNominal: t.DiskonNominal,
-		TotalPajak: t.TotalPajak, GrandTotal: t.GrandTotal,
+		TotalPajak: t.TotalPajak, Pembulatan: t.Pembulatan, GrandTotal: t.GrandTotal,
 		Dibayar: t.Dibayar, Kembalian: t.Kembalian, Catatan: t.Catatan,
 	}
 	if t.User != nil {

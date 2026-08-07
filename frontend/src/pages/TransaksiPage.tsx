@@ -175,6 +175,12 @@ export default function TransaksiPage() {
                 −{rupiah(detail.total_diskon)}
               </Descriptions.Item>
               <Descriptions.Item label="Pajak">{rupiah(detail.total_pajak)}</Descriptions.Item>
+              {detail.pembulatan !== 0 && (
+                <Descriptions.Item label="Pembulatan">
+                  {detail.pembulatan > 0 ? '+' : '−'}
+                  {rupiah(Math.abs(detail.pembulatan))}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Grand Total">
                 <strong className="uang">{rupiah(detail.grand_total)}</strong>
               </Descriptions.Item>

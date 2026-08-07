@@ -25,7 +25,8 @@ type Transaksi struct {
 	DiskonPersen   float64 `gorm:"type:numeric(5,2);not null"`  // diskon keseluruhan (%)
 	DiskonNominal  float64 `gorm:"type:numeric(15,2);not null"` // diskon keseluruhan (Rp, sudah di-cap)
 	TotalPajak     float64 `gorm:"type:numeric(15,2);not null"`
-	GrandTotal     float64 `gorm:"type:numeric(15,2);not null"`
+	Pembulatan     float64 `gorm:"type:numeric(15,2);not null;default:0"` // penyesuaian pembulatan total (+/−) dari pengaturan
+	GrandTotal     float64 `gorm:"type:numeric(15,2);not null"`           // sudah termasuk pembulatan
 	Dibayar        float64 `gorm:"type:numeric(15,2);not null"`
 	Kembalian      float64 `gorm:"type:numeric(15,2);not null"`
 	TipePembayaran string  `gorm:"size:10;not null"` // TUNAI | TRANSFER | QRIS

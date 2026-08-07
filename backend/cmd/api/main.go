@@ -132,16 +132,16 @@ func main() {
 	holdRepo := pgrepo.NewHoldRepository(db)
 	pengeluaranRepo := pgrepo.NewPengeluaranRepository(db)
 	laporanRepo := pgrepo.NewLaporanRepository(db)
+	pengaturanRepo := pgrepo.NewPengaturanRepository(db)
 
 	sesiUC := usecase.NewSesiUsecase(sesiRepo, transaksiRepo)
-	transaksiUC := usecase.NewTransaksiUsecase(transaksiRepo, sesiRepo, produkRepo, pelangganRepo)
+	transaksiUC := usecase.NewTransaksiUsecase(transaksiRepo, sesiRepo, produkRepo, pelangganRepo, pengaturanRepo)
 	laporanUC := usecase.NewLaporanUsecase(laporanRepo, pengeluaranRepo)
 	pengeluaranUC := usecase.NewPengeluaranUsecase(pengeluaranRepo)
 	pelangganUC := usecase.NewPelangganUsecase(pelangganRepo)
 	holdUC := usecase.NewHoldUsecase(holdRepo)
 	stokRepo := pgrepo.NewStokRepository(db)
 	inventoryUC := usecase.NewInventoryUsecase(produkRepo, stokRepo, sesiRepo)
-	pengaturanRepo := pgrepo.NewPengaturanRepository(db)
 	pengaturanUC := usecase.NewPengaturanUsecase(pengaturanRepo, usahaRepo)
 
 	semaiAdmin(db, cfg, usahaDefault.ID, log)

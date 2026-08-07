@@ -25,6 +25,7 @@ export interface Struk {
   diskon_persen: number;
   diskon_nominal: number;
   total_pajak: number;
+  pembulatan: number;
   grand_total: number;
   dibayar: number;
   kembalian: number;

@@ -3192,6 +3192,9 @@ const docTemplate = `{
                 "pelanggan": {
                     "type": "string"
                 },
+                "pembulatan": {
+                    "type": "number"
+                },
                 "status": {
                     "type": "string"
                 },

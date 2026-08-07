@@ -22,10 +22,11 @@ import (
 //	           pajak tidak berubah oleh diskon transaksi.
 //	grand    = Σsubtotal − totalDiskon + Σpajak   (tak pernah negatif)
 type TransaksiUsecase struct {
-	transaksi domain.TransaksiRepository
-	sesi      domain.SesiRepository
-	produk    domain.ProdukRepository
-	pelanggan domain.PelangganRepository
+	transaksi  domain.TransaksiRepository
+	sesi       domain.SesiRepository
+	produk     domain.ProdukRepository
+	pelanggan  domain.PelangganRepository
+	pengaturan domain.PengaturanRepository // pembulatan total (nil = tanpa)
 }
 
 func NewTransaksiUsecase(
@@ -33,8 +34,9 @@ func NewTransaksiUsecase(
 	sesi domain.SesiRepository,
 	produk domain.ProdukRepository,
 	pelanggan domain.PelangganRepository,
+	pengaturan domain.PengaturanRepository,
 ) *TransaksiUsecase {
-	return &TransaksiUsecase{transaksi: transaksi, sesi: sesi, produk: produk, pelanggan: pelanggan}
+	return &TransaksiUsecase{transaksi: transaksi, sesi: sesi, produk: produk, pelanggan: pelanggan, pengaturan: pengaturan}
 }
 
 // ItemCheckout — baris keranjang. Harga 0 = pakai harga efektif katalog
@@ -139,6 +141,19 @@ func (uc *TransaksiUsecase) Checkout(ctx context.Context, userID uint, in InputC
 	totalDiskon := totalDiskonItem + diskonTransaksi
 	grand := bulatkan(subtotal - totalDiskon + totalPajak)
 
+	// Pembulatan total sesuai pengaturan usaha (mis. ke kelipatan 100). Nilai
+	// penyesuaian (+/−) dicatat terpisah supaya struk tetap transparan. Bila
+	// pengaturan belum dibuat → tanpa pembulatan (graceful, bukan galat).
+	var pembulatan float64
+	if uc.pengaturan != nil {
+		if p, err := uc.pengaturan.CariByUsaha(ctx); err == nil && p.Pembulatan > 0 {
+			step := float64(p.Pembulatan)
+			grandBulat := math.Round(grand/step) * step
+			pembulatan = bulatkan(grandBulat - grand)
+			grand = grandBulat
+		}
+	}
+
 	t := &domain.Transaksi{
 		Nomor:          fmt.Sprintf("POSTMP-%d", kini.UnixNano()), // final diisi repo: POS-<tgl>-<id>
 		SesiKasirID:    sesi.ID,
@@ -150,6 +165,7 @@ func (uc *TransaksiUsecase) Checkout(ctx context.Context, userID uint, in InputC
 		DiskonPersen:   diskonPersen,
 		DiskonNominal:  bulatkan(diskonNominal),
 		TotalPajak:     bulatkan(totalPajak),
+		Pembulatan:     pembulatan,
 		GrandTotal:     grand,
 		Dibayar:        in.Dibayar,
 		Kembalian:      math.Max(0, bulatkan(in.Dibayar-grand)),

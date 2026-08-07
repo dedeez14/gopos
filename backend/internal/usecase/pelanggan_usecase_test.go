@@ -189,7 +189,7 @@ func TestCheckoutDenganPelanggan(t *testing.T) {
 	pelRepo := newPelangganRepoPalsu()
 
 	sesiUC := NewSesiUsecase(sesiRepo, trxRepo)
-	trxUC := NewTransaksiUsecase(trxRepo, sesiRepo, produkRepo, pelRepo)
+	trxUC := NewTransaksiUsecase(trxRepo, sesiRepo, produkRepo, pelRepo, newPengaturanRepoPalsu())
 	ctx := context.Background()
 
 	if _, err := sesiUC.Buka(ctx, 7, 0, ""); err != nil {

@@ -110,7 +110,7 @@ func siapkanKasir(t *testing.T) (*TransaksiUsecase, *SesiUsecase, *produkRepoPal
 	trxRepo := newTrxRepoPalsu()
 
 	sesiUC := NewSesiUsecase(sesiRepo, trxRepo)
-	trxUC := NewTransaksiUsecase(trxRepo, sesiRepo, produkRepo, newPelangganRepoPalsu())
+	trxUC := NewTransaksiUsecase(trxRepo, sesiRepo, produkRepo, newPelangganRepoPalsu(), newPengaturanRepoPalsu())
 
 	if _, err := sesiUC.Buka(context.Background(), 7, 100000, ""); err != nil {
 		t.Fatal(err)
@@ -166,6 +166,40 @@ func TestCheckoutRumusLengkap(t *testing.T) {
 	}
 }
 
+// Pembulatan dari pengaturan usaha membulatkan grand total ke kelipatan yang
+// ditentukan, mencatat penyesuaian (+/−), dan menghitung kembalian dari total
+// yang SUDAH dibulatkan.
+func TestCheckoutPembulatan(t *testing.T) {
+	produkRepo := newProdukRepoPalsu()
+	sesiRepo := newSesiRepoPalsu()
+	trxRepo := newTrxRepoPalsu()
+	pengRepo := newPengaturanRepoPalsu()
+	pengRepo.data[0] = &domain.Pengaturan{Pembulatan: 100} // ctx background → usaha 0
+
+	sesiUC := NewSesiUsecase(sesiRepo, trxRepo)
+	trxUC := NewTransaksiUsecase(trxRepo, sesiRepo, produkRepo, newPelangganRepoPalsu(), pengRepo)
+	ctx := context.Background()
+	if _, err := sesiUC.Buka(ctx, 7, 0, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	p := tambahProduk(t, produkRepo, domain.Produk{Nama: "P", Kode: "P", HargaJual: 12345, Aktif: true})
+	// grand kasar 12.345 → kelipatan 100 terdekat = 12.300 ; pembulatan −45.
+	trx, err := trxUC.Checkout(ctx, 7, InputCheckout{
+		Items:          []ItemCheckout{{ProdukID: p.ID, Kuantitas: 1, Harga: 12345}},
+		TipePembayaran: domain.TipeTunai, Dibayar: 12400,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if trx.GrandTotal != 12300 || trx.Pembulatan != -45 {
+		t.Fatalf("grand=%v pembulatan=%v (harap 12300 / −45)", trx.GrandTotal, trx.Pembulatan)
+	}
+	if trx.Kembalian != 100 { // 12.400 − 12.300
+		t.Fatalf("kembalian=%v (harap 100 dari total dibulatkan)", trx.Kembalian)
+	}
+}
+
 func TestCheckoutHargaKosongPakaiHargaEfektifPromo(t *testing.T) {
 	trxUC, _, produkRepo, _ := siapkanKasir(t)
 
@@ -186,7 +220,7 @@ func TestCheckoutHargaKosongPakaiHargaEfektifPromo(t *testing.T) {
 
 func TestCheckoutTanpaSesiDitolak(t *testing.T) {
 	produkRepo := newProdukRepoPalsu()
-	trxUC := NewTransaksiUsecase(newTrxRepoPalsu(), newSesiRepoPalsu(), produkRepo, newPelangganRepoPalsu())
+	trxUC := NewTransaksiUsecase(newTrxRepoPalsu(), newSesiRepoPalsu(), produkRepo, newPelangganRepoPalsu(), newPengaturanRepoPalsu())
 
 	_, err := trxUC.Checkout(context.Background(), 99, InputCheckout{
 		Items: []ItemCheckout{{ProdukID: 1, Kuantitas: 1}}, TipePembayaran: domain.TipeTunai,
