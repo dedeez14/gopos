@@ -24,6 +24,7 @@ func DaftarkanRute(
 	pelangganUC *usecase.PelangganUsecase,
 	holdUC *usecase.HoldUsecase,
 	inventoryUC *usecase.InventoryUsecase,
+	usahaUC *usecase.UsahaUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
@@ -31,6 +32,7 @@ func DaftarkanRute(
 	kasirH := NewKasirHandler(sesiUC, transaksiUC)
 	laporanH := NewLaporanHandler(laporanUC, pengeluaranUC, pelangganUC, holdUC)
 	inventoryH := NewInventoryHandler(inventoryUC)
+	usahaH := NewUsahaHandler(usahaUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -96,6 +98,11 @@ func DaftarkanRute(
 	privat.POST("/inventory/stok-masuk", inventoryH.StokMasuk, appmw.ButuhIzin(domain.PermProdukKelola))
 	privat.POST("/inventory/opname", inventoryH.Opname, appmw.ButuhIzin(domain.PermProdukKelola))
 	privat.GET("/inventory/riwayat", inventoryH.Riwayat, appmw.ButuhIzin(domain.PermProdukKelola))
+
+	// Usaha (tenant) — level PLATFORM, khusus SUPERADMIN.
+	privat.GET("/usahas", usahaH.Daftar, appmw.ButuhIzin(domain.PermUsahaKelola))
+	privat.POST("/usahas", usahaH.Buat, appmw.ButuhIzin(domain.PermUsahaKelola))
+	privat.PATCH("/usahas/:id", usahaH.Perbarui, appmw.ButuhIzin(domain.PermUsahaKelola))
 
 	// Hold — parkir keranjang, alat harian kasir.
 	privat.GET("/hold", laporanH.DaftarHold, appmw.ButuhIzin(domain.PermKasir))

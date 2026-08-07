@@ -114,12 +114,14 @@ func main() {
 	// ── Perakitan dependensi (dari dalam ke luar) ────────────────────────
 	userRepo := pgrepo.NewUserRepository(db)
 	tokenRepo := redisrepo.NewTokenRepository(rdb)
+	usahaRepo := pgrepo.NewUsahaRepository(db)
 
 	produkRepo := pgrepo.NewProdukRepository(db)
 	kategoriRepo := pgrepo.NewKategoriRepository(db)
 
 	userUC := usecase.NewUserUsecase(userRepo)
-	authUC := usecase.NewAuthUsecase(userRepo, tokenRepo, cfg.JWTSecret, cfg.AccessTokenTTL, cfg.RefreshTTL)
+	authUC := usecase.NewAuthUsecase(userRepo, tokenRepo, usahaRepo, cfg.JWTSecret, cfg.AccessTokenTTL, cfg.RefreshTTL)
+	usahaUC := usecase.NewUsahaUsecase(usahaRepo, userRepo)
 	produkUC := usecase.NewProdukUsecase(produkRepo, kategoriRepo)
 	kategoriUC := usecase.NewKategoriUsecase(kategoriRepo)
 
@@ -140,6 +142,18 @@ func main() {
 	inventoryUC := usecase.NewInventoryUsecase(produkRepo, stokRepo, sesiRepo)
 
 	semaiAdmin(db, cfg, usahaDefault.ID, log)
+
+	// Promosi SUPERADMIN sekali jalan: platform butuh minimal satu pengelola
+	// tenant. Idempoten — hanya bila belum ada SUPERADMIN sama sekali.
+	var adaSuper int64
+	db.Model(&domain.User{}).Where("role = ?", domain.RoleSuperadmin).Count(&adaSuper)
+	if adaSuper == 0 {
+		if err := db.Model(&domain.User{}).Where("email = ?", cfg.AdminEmail).
+			Update("role", domain.RoleSuperadmin).Error; err != nil {
+			log.Fatal().Err(err).Msg("gagal mempromosikan superadmin")
+		}
+		log.Info().Str("email", cfg.AdminEmail).Msg("dipromosikan menjadi SUPERADMIN")
+	}
 
 	// ── HTTP server ──────────────────────────────────────────────────────
 	e := echo.New()
@@ -208,7 +222,7 @@ func main() {
 		log.Info().Str("dist", cfg.AdminDist).Msg("admin panel disajikan dari server ini")
 	}
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

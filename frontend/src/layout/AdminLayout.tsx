@@ -1,10 +1,11 @@
 // Kerangka halaman admin: Sider (menu) + Header (identitas & keluar) +
 // Content. Semua halaman privat dirender lewat <Outlet/> di dalam layout ini.
 
-import { BarChartOutlined, ContactsOutlined, DashboardOutlined, DatabaseOutlined, FileTextOutlined, LogoutOutlined, ShoppingOutlined, TeamOutlined } from '@ant-design/icons';
+import { ApartmentOutlined, BarChartOutlined, ContactsOutlined, DashboardOutlined, DatabaseOutlined, FileTextOutlined, LogoutOutlined, ShoppingOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button, Layout, Menu, Typography, theme } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { logout } from '../api/users';
+import { auth } from '../lib/auth';
 
 const { Sider, Header, Content } = Layout;
 
@@ -31,6 +32,9 @@ export default function AdminLayout() {
           onClick={({ key }) => navigate(key)}
           items={[
             { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
+            ...(auth.role() === 'SUPERADMIN'
+              ? [{ key: '/usaha', icon: <ApartmentOutlined />, label: 'Usaha (Merchant)' }]
+              : []),
             { key: '/produk', icon: <ShoppingOutlined />, label: 'Produk & Jasa' },
             { key: '/transaksi', icon: <FileTextOutlined />, label: 'Transaksi' },
             { key: '/inventory', icon: <DatabaseOutlined />, label: 'Inventory' },

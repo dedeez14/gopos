@@ -55,8 +55,13 @@ SATU deployment melayani BANYAK usaha (merchant) — meniru model MOVERA:
 - `CariByID`/`CariByEmail` user sengaja global (alur refresh/login berjalan
   sebelum usaha ada di context) — penolakan lintas usaha ada di usecase
   (`pastikanSeUsaha`).
-- Usaha baru: sementara lewat seed/SQL (`usahas` + user owner-nya);
-  manajemen usaha via panel = pekerjaan berikutnya.
+- Peran **SUPERADMIN** (level platform) mengelola daftar usaha dari panel:
+  menu **Usaha (Merchant)** → buat usaha baru SEKALIGUS akun owner-nya
+  (langsung bisa login), suspend/aktifkan (usaha di-suspend → seluruh
+  penggunanya ditolak login, saklar untuk merchant menunggak).
+  `admin@tuleh.id` dipromosikan SUPERADMIN otomatis saat boot (bila belum
+  ada superadmin). Endpoint `/usahas` (GET/POST/PATCH) digerbang izin
+  `usaha.kelola`.
 
 ## Akun & Data Default
 

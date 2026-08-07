@@ -39,6 +39,7 @@ export async function login(email: string, password: string): Promise<LoginResul
   >('/auth/login', { email, password });
   const data = bukaAmplop(res.data);
   auth.simpan(data.access_token, data.refresh_token);
+  auth.simpanRole(data.user.role);
   return { user: data.user };
 }
 

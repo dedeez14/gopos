@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -21,6 +22,27 @@ type Usaha struct {
 	Aktif     bool   `gorm:"not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+var (
+	ErrKodeUsahaTerpakai = errors.New("kode usaha sudah dipakai")
+	ErrUsahaNonaktif     = errors.New("usaha ini sedang dinonaktifkan. Hubungi pengelola platform")
+)
+
+type FilterUsaha struct {
+	Cari    string
+	Halaman int
+	PerHal  int
+}
+
+// UsahaRepository — tabel PLATFORM: sengaja TIDAK di-scope usaha_id.
+// Gerbangnya izin usaha.kelola (SUPERADMIN) di route.
+type UsahaRepository interface {
+	Simpan(ctx context.Context, u *Usaha) error
+	Perbarui(ctx context.Context, u *Usaha) error
+	CariByID(ctx context.Context, id uint) (*Usaha, error)
+	CariByKode(ctx context.Context, kode string) (*Usaha, error)
+	Daftar(ctx context.Context, f FilterUsaha) ([]Usaha, int64, error)
 }
 
 type kunciUsahaCtx struct{}

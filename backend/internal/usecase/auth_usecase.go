@@ -23,6 +23,7 @@ import (
 type AuthUsecase struct {
 	users     domain.UserRepository
 	tokens    domain.TokenRepository
+	usahas    domain.UsahaRepository
 	jwtSecret []byte
 	accessTTL time.Duration
 	refresTTL time.Duration
@@ -31,14 +32,31 @@ type AuthUsecase struct {
 func NewAuthUsecase(
 	users domain.UserRepository,
 	tokens domain.TokenRepository,
+	usahas domain.UsahaRepository,
 	jwtSecret string,
 	accessTTL, refreshTTL time.Duration,
 ) *AuthUsecase {
 	return &AuthUsecase{
-		users: users, tokens: tokens,
+		users: users, tokens: tokens, usahas: usahas,
 		jwtSecret: []byte(jwtSecret),
 		accessTTL: accessTTL, refresTTL: refreshTTL,
 	}
+}
+
+// usahaHidup: pengguna dari usaha yang di-SUSPEND ditolak masuk — saklar
+// platform untuk merchant menunggak/berhenti.
+func (uc *AuthUsecase) usahaHidup(ctx context.Context, usahaID uint) error {
+	if usahaID == 0 || uc.usahas == nil {
+		return nil
+	}
+	us, err := uc.usahas.CariByID(ctx, usahaID)
+	if err != nil {
+		return nil // usaha hilang = jangan blokir login karena data platform
+	}
+	if !us.Aktif {
+		return domain.ErrUsahaNonaktif
+	}
+	return nil
 }
 
 // Klaim adalah isi JWT access token. Sengaja minimal: id + role cukup untuk
@@ -64,6 +82,9 @@ func (uc *AuthUsecase) Login(ctx context.Context, email, sandi string) (*domain.
 	if !u.Aktif {
 		return nil, nil, domain.ErrUserNonaktif
 	}
+	if err := uc.usahaHidup(ctx, u.UsahaID); err != nil {
+		return nil, nil, err
+	}
 
 	pair, err := uc.terbitkan(ctx, u)
 	return pair, u, err
@@ -78,6 +99,9 @@ func (uc *AuthUsecase) Refresh(ctx context.Context, refreshToken string) (*domai
 	u, err := uc.users.CariByID(ctx, userID)
 	if err != nil || !u.Aktif {
 		return nil, domain.ErrTokenTidakSah
+	}
+	if err := uc.usahaHidup(ctx, u.UsahaID); err != nil {
+		return nil, err
 	}
 
 	// Rotasi: token lama mati sebelum yang baru lahir.

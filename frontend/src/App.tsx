@@ -10,6 +10,7 @@ import TransaksiPage from './pages/TransaksiPage';
 import InventoryPage from './pages/InventoryPage';
 import LaporanPage from './pages/LaporanPage';
 import PelangganPage from './pages/PelangganPage';
+import UsahaPage from './pages/UsahaPage';
 import UsersPage from './pages/UsersPage';
 import { auth } from './lib/auth';
 
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/laporan" element={<LaporanPage />} />
         <Route path="/pelanggan" element={<PelangganPage />} />
+        <Route path="/usaha" element={<UsahaPage />} />
         <Route path="/users" element={<UsersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
