@@ -75,6 +75,10 @@ func main() {
 	if kodeCompany == "" {
 		kodeCompany = "TULEH-DEMO"
 	}
+	kodeUsaha := strings.TrimSpace(os.Getenv("SINKRON_USAHA_KODE"))
+	if kodeUsaha == "" {
+		kodeUsaha = "DEMO"
+	}
 
 	senyap := &gorm.Config{Logger: gormlogger.Default.LogMode(gormlogger.Silent)}
 	sumber, err := gorm.Open(mysql.Open(dsnMySQL), senyap)
@@ -94,7 +98,14 @@ func main() {
 		`SELECT id FROM companies WHERE kode = ?`, kodeCompany).Scan(&companyID).Error; err != nil || companyID == 0 {
 		log.Fatal().Err(err).Str("kode", kodeCompany).Msg("company sumber tidak ditemukan")
 	}
-	log.Info().Uint("company_id", companyID).Str("kode", kodeCompany).Msg("mulai sinkron")
+	// Usaha tujuan (tenant di Tuléh Server) — dibuat bila belum ada.
+	usaha := domain.Usaha{Kode: kodeUsaha, Nama: kodeCompany, Aktif: true}
+	if err := tujuan.WithContext(ctx).Where(domain.Usaha{Kode: kodeUsaha}).FirstOrCreate(&usaha).Error; err != nil {
+		log.Fatal().Err(err).Msg("gagal menyiapkan usaha tujuan")
+	}
+
+	log.Info().Uint("company_id", companyID).Str("kode", kodeCompany).
+		Uint("usaha_id", usaha.ID).Msg("mulai sinkron")
 
 	// ── produk (+kategori) ───────────────────────────────────────────────
 	var produk []produkSumber
@@ -123,9 +134,9 @@ func main() {
 			id, ok := kategoriID[*src.Kategori]
 			if !ok {
 				var k domain.Kategori
-				err := tujuan.WithContext(ctx).Where("nama = ?", *src.Kategori).First(&k).Error
+				err := tujuan.WithContext(ctx).Where("nama = ? AND usaha_id = ?", *src.Kategori, usaha.ID).First(&k).Error
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					k = domain.Kategori{Nama: *src.Kategori}
+					k = domain.Kategori{Nama: *src.Kategori, UsahaID: usaha.ID}
 					if err := tujuan.WithContext(ctx).Create(&k).Error; err != nil {
 						log.Fatal().Err(err).Msg("gagal upsert kategori")
 					}
@@ -148,7 +159,8 @@ func main() {
 		}
 
 		target := domain.Produk{
-			Kode: src.Kode, Nama: src.Nama, Barcode: src.Barcode, Tipe: tipe,
+			UsahaID: usaha.ID,
+			Kode:    src.Kode, Nama: src.Nama, Barcode: src.Barcode, Tipe: tipe,
 			Satuan: satuan, HargaBeli: src.HargaBeli, HargaJual: src.HargaJual,
 			HargaPromo: src.HargaPromo, PromoMulai: src.PromoMulai, PromoSelesai: src.PromoSelesai,
 			Favorit: src.Favorit, KelolaStok: src.KelolaStok && tipe != domain.TipeJasa,
@@ -156,7 +168,7 @@ func main() {
 		}
 
 		var lama domain.Produk
-		err := tujuan.WithContext(ctx).Where("kode = ?", src.Kode).First(&lama).Error
+		err := tujuan.WithContext(ctx).Where("kode = ? AND usaha_id = ?", src.Kode, usaha.ID).First(&lama).Error
 		switch {
 		case errors.Is(err, gorm.ErrRecordNotFound):
 			if err := tujuan.WithContext(ctx).Create(&target).Error; err != nil {
@@ -197,12 +209,12 @@ func main() {
 		var lama domain.Pelanggan
 		var err error
 		if tel != "" {
-			err = tujuan.WithContext(ctx).Where("telepon = ?", tel).First(&lama).Error
+			err = tujuan.WithContext(ctx).Where("telepon = ? AND usaha_id = ?", tel, usaha.ID).First(&lama).Error
 		} else {
-			err = tujuan.WithContext(ctx).Where("nama = ? AND telepon IS NULL", src.Nama).First(&lama).Error
+			err = tujuan.WithContext(ctx).Where("nama = ? AND telepon IS NULL AND usaha_id = ?", src.Nama, usaha.ID).First(&lama).Error
 		}
 
-		target := domain.Pelanggan{Nama: src.Nama, Email: src.Email, Aktif: src.Aktif}
+		target := domain.Pelanggan{UsahaID: usaha.ID, Nama: src.Nama, Email: src.Email, Aktif: src.Aktif}
 		if tel != "" {
 			target.Telepon = &tel
 		}

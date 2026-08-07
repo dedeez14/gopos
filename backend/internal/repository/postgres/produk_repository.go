@@ -20,18 +20,20 @@ func NewProdukRepository(db *gorm.DB) *ProdukRepository {
 }
 
 func (r *ProdukRepository) Simpan(ctx context.Context, p *domain.Produk) error {
+	isiUsaha(ctx, &p.UsahaID)
 	return r.db.WithContext(ctx).Create(p).Error
 }
 
 func (r *ProdukRepository) Perbarui(ctx context.Context, p *domain.Produk) error {
 	// Save + Select("*") supaya kolom pointer yang di-nil-kan (harga_promo,
 	// periode, barcode, kategori) IKUT ditulis NULL — perilaku "cabut promo".
-	return r.db.WithContext(ctx).Model(p).Select("*").Omit("id", "created_at").Updates(p).Error
+	return r.db.WithContext(ctx).Model(p).Where("usaha_id = ?", domain.UsahaDari(ctx)).
+		Select("*").Omit("id", "created_at", "usaha_id").Updates(p).Error
 }
 
 func (r *ProdukRepository) CariByID(ctx context.Context, id uint) (*domain.Produk, error) {
 	var p domain.Produk
-	err := r.db.WithContext(ctx).Preload("Kategori").First(&p, id).Error
+	err := skop(ctx, r.db).Preload("Kategori").First(&p, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -40,7 +42,7 @@ func (r *ProdukRepository) CariByID(ctx context.Context, id uint) (*domain.Produ
 
 func (r *ProdukRepository) CariByKode(ctx context.Context, kode string) (*domain.Produk, error) {
 	var p domain.Produk
-	err := r.db.WithContext(ctx).Where("kode = ?", kode).First(&p).Error
+	err := skop(ctx, r.db).Where("kode = ?", kode).First(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -48,7 +50,7 @@ func (r *ProdukRepository) CariByKode(ctx context.Context, kode string) (*domain
 }
 
 func (r *ProdukRepository) Daftar(ctx context.Context, f domain.FilterProduk) ([]domain.Produk, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.Produk{})
+	q := skop(ctx, r.db).Model(&domain.Produk{})
 
 	if !f.TermasukNonaktif {
 		q = q.Where("aktif = ?", true)
@@ -87,7 +89,7 @@ func (r *ProdukRepository) Daftar(ctx context.Context, f domain.FilterProduk) ([
 }
 
 func (r *ProdukRepository) Nonaktifkan(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Model(&domain.Produk{}).
+	return skop(ctx, r.db).Model(&domain.Produk{}).
 		Where("id = ?", id).Update("aktif", false).Error
 }
 
@@ -102,18 +104,19 @@ func NewKategoriRepository(db *gorm.DB) *KategoriRepository {
 }
 
 func (r *KategoriRepository) Simpan(ctx context.Context, k *domain.Kategori) error {
+	isiUsaha(ctx, &k.UsahaID)
 	return r.db.WithContext(ctx).Create(k).Error
 }
 
 func (r *KategoriRepository) Daftar(ctx context.Context) ([]domain.Kategori, error) {
 	var rows []domain.Kategori
-	err := r.db.WithContext(ctx).Order("nama ASC").Find(&rows).Error
+	err := skop(ctx, r.db).Order("nama ASC").Find(&rows).Error
 	return rows, err
 }
 
 func (r *KategoriRepository) CariByID(ctx context.Context, id uint) (*domain.Kategori, error) {
 	var k domain.Kategori
-	err := r.db.WithContext(ctx).First(&k, id).Error
+	err := skop(ctx, r.db).First(&k, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -123,11 +126,13 @@ func (r *KategoriRepository) CariByID(ctx context.Context, id uint) (*domain.Kat
 func (r *KategoriRepository) Hapus(ctx context.Context, id uint) error {
 	// Produk yang memakai kategori ini dilepas dulu (SET NULL manual) supaya
 	// tidak ada FK menggantung.
+	usahaID := domain.UsahaDari(ctx)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&domain.Produk{}).Where("kategori_id = ?", id).
+		if err := tx.Model(&domain.Produk{}).
+			Where("kategori_id = ? AND usaha_id = ?", id, usahaID).
 			Update("kategori_id", nil).Error; err != nil {
 			return err
 		}
-		return tx.Delete(&domain.Kategori{}, id).Error
+		return tx.Where("usaha_id = ?", usahaID).Delete(&domain.Kategori{}, id).Error
 	})
 }

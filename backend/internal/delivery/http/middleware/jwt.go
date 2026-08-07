@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/tuleh-pos/server/internal/domain"
 	"github.com/tuleh-pos/server/internal/usecase"
 	"github.com/tuleh-pos/server/pkg/respond"
 )
@@ -37,6 +38,10 @@ func JWT(auth *usecase.AuthUsecase) echo.MiddlewareFunc {
 
 			c.Set(CtxUserID, klaim.UserID)
 			c.Set(CtxRole, klaim.Role)
+			// Usaha aktif dititipkan ke context.Context request — repository
+			// membacanya untuk scoping (lihat domain.UsahaDari, fail-closed).
+			ctx := domain.DenganUsaha(c.Request().Context(), klaim.UsahaID)
+			c.SetRequest(c.Request().WithContext(ctx))
 			return next(c)
 		}
 	}

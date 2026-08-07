@@ -71,11 +71,37 @@ func main() {
 	// (rename/drop kolom) tetap tulis migrasi manual — AutoMigrate hanya
 	// MENAMBAH, tidak pernah menghapus.
 	if err := db.AutoMigrate(
+		&domain.Usaha{},
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
+	}
+
+	// ── bootstrap multi-tenant ───────────────────────────────────────────
+	// Unique lama per-kolom diganti unique KOMPOSIT (usaha_id, kode/nama) —
+	// AutoMigrate tidak menghapus index lama, jadi dibersihkan eksplisit.
+	for _, q := range []string{
+		`DROP INDEX IF EXISTS idx_produks_kode`,
+		`DROP INDEX IF EXISTS idx_kategoris_nama`,
+	} {
+		if err := db.Exec(q).Error; err != nil {
+			log.Fatal().Err(err).Str("q", q).Msg("gagal membersihkan index lama")
+		}
+	}
+	// Usaha default + backfill data pra-tenant (usaha_id 0 = orphan).
+	usahaDefault := domain.Usaha{Kode: "DEMO", Nama: "Tuléh Demo", Aktif: true}
+	if err := db.Where(domain.Usaha{Kode: "DEMO"}).FirstOrCreate(&usahaDefault).Error; err != nil {
+		log.Fatal().Err(err).Msg("gagal menyiapkan usaha default")
+	}
+	for _, tabel := range []string{
+		"users", "kategoris", "produks", "sesi_kasirs", "transaksis",
+		"pelanggans", "holds", "pengeluarans", "stok_logs",
+	} {
+		if err := db.Exec("UPDATE "+tabel+" SET usaha_id = ? WHERE usaha_id = 0", usahaDefault.ID).Error; err != nil {
+			log.Fatal().Err(err).Str("tabel", tabel).Msg("backfill usaha gagal")
+		}
 	}
 
 	rdb := goredis.NewClient(&goredis.Options{
@@ -113,7 +139,7 @@ func main() {
 	stokRepo := pgrepo.NewStokRepository(db)
 	inventoryUC := usecase.NewInventoryUsecase(produkRepo, stokRepo, sesiRepo)
 
-	semaiAdmin(db, cfg, log)
+	semaiAdmin(db, cfg, usahaDefault.ID, log)
 
 	// ── HTTP server ──────────────────────────────────────────────────────
 	e := echo.New()
@@ -207,7 +233,7 @@ func main() {
 
 // semaiAdmin membuat pengguna pertama (OWNER) bila tabel masih kosong —
 // supaya instalasi baru langsung bisa dipakai tanpa menyentuh database.
-func semaiAdmin(db *gorm.DB, cfg *config.Config, log zerolog.Logger) {
+func semaiAdmin(db *gorm.DB, cfg *config.Config, usahaID uint, log zerolog.Logger) {
 	var jumlah int64
 	db.Model(&domain.User{}).Count(&jumlah)
 	if jumlah > 0 {
@@ -219,7 +245,8 @@ func semaiAdmin(db *gorm.DB, cfg *config.Config, log zerolog.Logger) {
 		log.Fatal().Err(err).Msg("gagal menyemai admin")
 	}
 	admin := &domain.User{
-		Nama: cfg.AdminNama, Email: cfg.AdminEmail,
+		UsahaID: usahaID,
+		Nama:    cfg.AdminNama, Email: cfg.AdminEmail,
 		PasswordHash: string(hash), Role: domain.RoleOwner, Aktif: true,
 	}
 	if err := db.Create(admin).Error; err != nil {

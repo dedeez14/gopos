@@ -62,6 +62,7 @@ func (r Role) Punya(p Permission) bool {
 // struct ini langsung.
 type User struct {
 	ID           uint   `gorm:"primaryKey"`
+	UsahaID      uint   `gorm:"index;not null;default:0"` // tenant; 0 = orphan (fail-closed)
 	Nama         string `gorm:"size:150;not null"`
 	Email        string `gorm:"size:150;uniqueIndex;not null"`
 	PasswordHash string `gorm:"size:100;not null"`

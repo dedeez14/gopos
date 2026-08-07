@@ -22,6 +22,7 @@ func NewSesiRepository(db *gorm.DB) *SesiRepository {
 
 func (r *SesiRepository) Simpan(ctx context.Context, s *domain.SesiKasir) error {
 	// Nomor cantik butuh id → create + update nomor dalam SATU transaksi DB.
+	isiUsaha(ctx, &s.UsahaID)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(s).Error; err != nil {
 			return err
@@ -32,12 +33,13 @@ func (r *SesiRepository) Simpan(ctx context.Context, s *domain.SesiKasir) error 
 }
 
 func (r *SesiRepository) Perbarui(ctx context.Context, s *domain.SesiKasir) error {
-	return r.db.WithContext(ctx).Model(s).Select("*").Omit("id", "created_at").Updates(s).Error
+	return r.db.WithContext(ctx).Model(s).Where("usaha_id = ?", domain.UsahaDari(ctx)).
+		Select("*").Omit("id", "created_at", "usaha_id").Updates(s).Error
 }
 
 func (r *SesiRepository) CariByID(ctx context.Context, id uint) (*domain.SesiKasir, error) {
 	var s domain.SesiKasir
-	err := r.db.WithContext(ctx).Preload("User").First(&s, id).Error
+	err := skop(ctx, r.db).Preload("User").First(&s, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -46,7 +48,7 @@ func (r *SesiRepository) CariByID(ctx context.Context, id uint) (*domain.SesiKas
 
 func (r *SesiRepository) AktifMilik(ctx context.Context, userID uint) (*domain.SesiKasir, error) {
 	var s domain.SesiKasir
-	err := r.db.WithContext(ctx).
+	err := skop(ctx, r.db).
 		Where("user_id = ? AND status = ?", userID, domain.SesiBuka).
 		Order("id DESC").First(&s).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -56,7 +58,7 @@ func (r *SesiRepository) AktifMilik(ctx context.Context, userID uint) (*domain.S
 }
 
 func (r *SesiRepository) Daftar(ctx context.Context, f domain.FilterSesi) ([]domain.SesiKasir, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.SesiKasir{})
+	q := skop(ctx, r.db).Model(&domain.SesiKasir{})
 	if f.UserID != 0 {
 		q = q.Where("user_id = ?", f.UserID)
 	}
@@ -90,6 +92,7 @@ func NewTransaksiRepository(db *gorm.DB) *TransaksiRepository {
 // Gagal di mana pun = batal semua; tidak pernah ada penjualan tanpa potongan
 // stok atau sebaliknya.
 func (r *TransaksiRepository) Checkout(ctx context.Context, t *domain.Transaksi, potongStok map[uint]float64) error {
+	isiUsaha(ctx, &t.UsahaID)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(t).Error; err != nil {
 			return err
@@ -103,12 +106,13 @@ func (r *TransaksiRepository) Checkout(ctx context.Context, t *domain.Transaksi,
 			// sama bersamaan tidak saling menimpa, dan log stok mendapat
 			// angka sesudah-mutasi yang benar.
 			var sesudah float64
-			if err := tx.Raw(`UPDATE produks SET stok = stok - ?, updated_at = NOW() WHERE id = ? RETURNING stok`,
-				qty, produkID).Scan(&sesudah).Error; err != nil {
+			if err := tx.Raw(`UPDATE produks SET stok = stok - ?, updated_at = NOW() WHERE id = ? AND usaha_id = ? RETURNING stok`,
+				qty, produkID, t.UsahaID).Scan(&sesudah).Error; err != nil {
 				return err
 			}
 			sesiID := t.SesiKasirID
 			if err := tx.Create(&domain.StokLog{
+				UsahaID:  t.UsahaID,
 				ProdukID: produkID, Jenis: domain.StokJual, Jumlah: -qty,
 				StokSesudah: sesudah, Keterangan: t.Nomor,
 				SesiKasirID: &sesiID, UserID: t.UserID,
@@ -123,18 +127,20 @@ func (r *TransaksiRepository) Checkout(ctx context.Context, t *domain.Transaksi,
 // Batalkan: status DIBATALKAN + stok kembali + log BATAL — satu transaksi DB.
 func (r *TransaksiRepository) Batalkan(ctx context.Context, t *domain.Transaksi, kembalikan map[uint]float64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&domain.Transaksi{}).Where("id = ?", t.ID).
+		if err := tx.Model(&domain.Transaksi{}).
+			Where("id = ? AND usaha_id = ?", t.ID, t.UsahaID).
 			Update("status", domain.TrxDibatalkan).Error; err != nil {
 			return err
 		}
 		for produkID, qty := range kembalikan {
 			var sesudah float64
-			if err := tx.Raw(`UPDATE produks SET stok = stok + ?, updated_at = NOW() WHERE id = ? RETURNING stok`,
-				qty, produkID).Scan(&sesudah).Error; err != nil {
+			if err := tx.Raw(`UPDATE produks SET stok = stok + ?, updated_at = NOW() WHERE id = ? AND usaha_id = ? RETURNING stok`,
+				qty, produkID, t.UsahaID).Scan(&sesudah).Error; err != nil {
 				return err
 			}
 			sesiID := t.SesiKasirID
 			if err := tx.Create(&domain.StokLog{
+				UsahaID:  t.UsahaID,
 				ProdukID: produkID, Jenis: domain.StokBatal, Jumlah: qty,
 				StokSesudah: sesudah, Keterangan: "Batal " + t.Nomor,
 				SesiKasirID: &sesiID, UserID: t.UserID,
@@ -148,7 +154,7 @@ func (r *TransaksiRepository) Batalkan(ctx context.Context, t *domain.Transaksi,
 
 func (r *TransaksiRepository) CariByID(ctx context.Context, id uint) (*domain.Transaksi, error) {
 	var t domain.Transaksi
-	err := r.db.WithContext(ctx).Preload("Items").Preload("User").Preload("Pelanggan").First(&t, id).Error
+	err := skop(ctx, r.db).Preload("Items").Preload("User").Preload("Pelanggan").First(&t, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -157,7 +163,7 @@ func (r *TransaksiRepository) CariByID(ctx context.Context, id uint) (*domain.Tr
 
 func (r *TransaksiRepository) CariByIdempotency(ctx context.Context, key string) (*domain.Transaksi, error) {
 	var t domain.Transaksi
-	err := r.db.WithContext(ctx).Preload("Items").Preload("User").Preload("Pelanggan").
+	err := skop(ctx, r.db).Preload("Items").Preload("User").Preload("Pelanggan").
 		Where("idempotency_key = ?", key).First(&t).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
@@ -166,7 +172,7 @@ func (r *TransaksiRepository) CariByIdempotency(ctx context.Context, key string)
 }
 
 func (r *TransaksiRepository) Daftar(ctx context.Context, f domain.FilterTransaksi) ([]domain.Transaksi, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.Transaksi{})
+	q := skop(ctx, r.db).Model(&domain.Transaksi{})
 	if f.SesiKasirID != 0 {
 		q = q.Where("sesi_kasir_id = ?", f.SesiKasirID)
 	}
@@ -194,7 +200,7 @@ func (r *TransaksiRepository) TotalSesi(ctx context.Context, sesiID uint) (map[s
 		TipePembayaran string
 		Total          float64
 	}
-	err := r.db.WithContext(ctx).Model(&domain.Transaksi{}).
+	err := skop(ctx, r.db).Model(&domain.Transaksi{}).
 		Select("tipe_pembayaran, COALESCE(SUM(grand_total),0) as total").
 		Where("sesi_kasir_id = ? AND status = ?", sesiID, domain.TrxSelesai).
 		Group("tipe_pembayaran").Scan(&baris).Error

@@ -20,16 +20,18 @@ func NewPelangganRepository(db *gorm.DB) *PelangganRepository {
 }
 
 func (r *PelangganRepository) Simpan(ctx context.Context, p *domain.Pelanggan) error {
+	isiUsaha(ctx, &p.UsahaID)
 	return r.db.WithContext(ctx).Create(p).Error
 }
 
 func (r *PelangganRepository) Perbarui(ctx context.Context, p *domain.Pelanggan) error {
-	return r.db.WithContext(ctx).Model(p).Select("*").Omit("id", "created_at").Updates(p).Error
+	return r.db.WithContext(ctx).Model(p).Where("usaha_id = ?", domain.UsahaDari(ctx)).
+		Select("*").Omit("id", "created_at", "usaha_id").Updates(p).Error
 }
 
 func (r *PelangganRepository) CariByID(ctx context.Context, id uint) (*domain.Pelanggan, error) {
 	var p domain.Pelanggan
-	err := r.db.WithContext(ctx).First(&p, id).Error
+	err := skop(ctx, r.db).First(&p, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -38,7 +40,7 @@ func (r *PelangganRepository) CariByID(ctx context.Context, id uint) (*domain.Pe
 
 func (r *PelangganRepository) CariByTelepon(ctx context.Context, telepon string) (*domain.Pelanggan, error) {
 	var p domain.Pelanggan
-	err := r.db.WithContext(ctx).Where("telepon = ?", telepon).First(&p).Error
+	err := skop(ctx, r.db).Where("telepon = ?", telepon).First(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -46,7 +48,7 @@ func (r *PelangganRepository) CariByTelepon(ctx context.Context, telepon string)
 }
 
 func (r *PelangganRepository) Daftar(ctx context.Context, f domain.FilterPelanggan) ([]domain.Pelanggan, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.Pelanggan{}).Where("aktif = ?", true)
+	q := skop(ctx, r.db).Model(&domain.Pelanggan{}).Where("aktif = ?", true)
 	if f.Cari != "" {
 		pola := "%" + f.Cari + "%"
 		q = q.Where("nama ILIKE ? OR telepon ILIKE ?", pola, pola)
@@ -64,7 +66,7 @@ func (r *PelangganRepository) Daftar(ctx context.Context, f domain.FilterPelangg
 }
 
 func (r *PelangganRepository) Nonaktifkan(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Model(&domain.Pelanggan{}).
+	return skop(ctx, r.db).Model(&domain.Pelanggan{}).
 		Where("id = ?", id).Update("aktif", false).Error
 }
 
@@ -79,18 +81,19 @@ func NewHoldRepository(db *gorm.DB) *HoldRepository {
 }
 
 func (r *HoldRepository) Simpan(ctx context.Context, h *domain.Hold) error {
+	isiUsaha(ctx, &h.UsahaID)
 	return r.db.WithContext(ctx).Create(h).Error
 }
 
 func (r *HoldRepository) Daftar(ctx context.Context) ([]domain.Hold, error) {
 	var rows []domain.Hold
-	err := r.db.WithContext(ctx).Preload("User").Order("id DESC").Limit(50).Find(&rows).Error
+	err := skop(ctx, r.db).Preload("User").Order("id DESC").Limit(50).Find(&rows).Error
 	return rows, err
 }
 
 func (r *HoldRepository) CariByID(ctx context.Context, id uint) (*domain.Hold, error) {
 	var h domain.Hold
-	err := r.db.WithContext(ctx).First(&h, id).Error
+	err := skop(ctx, r.db).First(&h, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -98,12 +101,12 @@ func (r *HoldRepository) CariByID(ctx context.Context, id uint) (*domain.Hold, e
 }
 
 func (r *HoldRepository) Hapus(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.Hold{}, id).Error
+	return skop(ctx, r.db).Delete(&domain.Hold{}, id).Error
 }
 
 func (r *HoldRepository) Jumlah(ctx context.Context) (int64, error) {
 	var n int64
-	err := r.db.WithContext(ctx).Model(&domain.Hold{}).Count(&n).Error
+	err := skop(ctx, r.db).Model(&domain.Hold{}).Count(&n).Error
 	return n, err
 }
 
@@ -118,11 +121,12 @@ func NewPengeluaranRepository(db *gorm.DB) *PengeluaranRepository {
 }
 
 func (r *PengeluaranRepository) Simpan(ctx context.Context, p *domain.Pengeluaran) error {
+	isiUsaha(ctx, &p.UsahaID)
 	return r.db.WithContext(ctx).Create(p).Error
 }
 
 func (r *PengeluaranRepository) Daftar(ctx context.Context, f domain.FilterPengeluaran) ([]domain.Pengeluaran, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.Pengeluaran{})
+	q := skop(ctx, r.db).Model(&domain.Pengeluaran{})
 	if f.Bulan != "" {
 		q = q.Where("to_char(tanggal, 'YYYY-MM') = ?", f.Bulan)
 	}
@@ -140,7 +144,7 @@ func (r *PengeluaranRepository) Daftar(ctx context.Context, f domain.FilterPenge
 
 func (r *PengeluaranRepository) CariByID(ctx context.Context, id uint) (*domain.Pengeluaran, error) {
 	var p domain.Pengeluaran
-	err := r.db.WithContext(ctx).First(&p, id).Error
+	err := skop(ctx, r.db).First(&p, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, domain.ErrTidakDitemukan
 	}
@@ -148,12 +152,12 @@ func (r *PengeluaranRepository) CariByID(ctx context.Context, id uint) (*domain.
 }
 
 func (r *PengeluaranRepository) Hapus(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.Pengeluaran{}, id).Error
+	return skop(ctx, r.db).Delete(&domain.Pengeluaran{}, id).Error
 }
 
 func (r *PengeluaranRepository) TotalBulan(ctx context.Context, bulan string) (float64, error) {
 	var total float64
-	err := r.db.WithContext(ctx).Model(&domain.Pengeluaran{}).
+	err := skop(ctx, r.db).Model(&domain.Pengeluaran{}).
 		Select("COALESCE(SUM(nominal),0)").
 		Where("to_char(tanggal, 'YYYY-MM') = ?", bulan).Scan(&total).Error
 	return total, err
@@ -180,9 +184,9 @@ func (r *LaporanRepository) PenjualanHarian(ctx context.Context, dari, sampai st
 		       COALESCE(SUM(total_diskon),0) AS diskon,
 		       COALESCE(SUM(total_pajak),0)  AS pajak
 		FROM transaksis
-		WHERE status = ? AND tanggal::date BETWEEN ? AND ?
+		WHERE status = ? AND usaha_id = ? AND tanggal::date BETWEEN ? AND ?
 		GROUP BY tanggal::date ORDER BY tanggal::date`,
-		domain.TrxSelesai, dari, sampai).Scan(&rows).Error
+		domain.TrxSelesai, domain.UsahaDari(ctx), dari, sampai).Scan(&rows).Error
 	return rows, err
 }
 
@@ -196,10 +200,10 @@ func (r *LaporanRepository) ProdukTerlaris(ctx context.Context, hari, limit int)
 		       COALESCE(SUM(i.subtotal),0)  AS omzet
 		FROM transaksi_items i
 		JOIN transaksis t ON t.id = i.transaksi_id
-		WHERE t.status = ? AND t.tanggal >= NOW() - make_interval(days => ?)
+		WHERE t.status = ? AND t.usaha_id = ? AND t.tanggal >= NOW() - make_interval(days => ?)
 		GROUP BY i.produk_id, i.nama_produk
 		ORDER BY terjual DESC LIMIT ?`,
-		domain.TrxSelesai, hari, limit).Scan(&rows).Error
+		domain.TrxSelesai, domain.UsahaDari(ctx), hari, limit).Scan(&rows).Error
 	return rows, err
 }
 
@@ -212,9 +216,9 @@ func (r *LaporanRepository) OmzetBulan(ctx context.Context, bulan string) (float
 	err := r.db.WithContext(ctx).Raw(`
 		SELECT tipe_pembayaran, COALESCE(SUM(grand_total),0) AS total, COUNT(*) AS jumlah
 		FROM transaksis
-		WHERE status = ? AND to_char(tanggal, 'YYYY-MM') = ?
+		WHERE status = ? AND usaha_id = ? AND to_char(tanggal, 'YYYY-MM') = ?
 		GROUP BY tipe_pembayaran`,
-		domain.TrxSelesai, bulan).Scan(&baris).Error
+		domain.TrxSelesai, domain.UsahaDari(ctx), bulan).Scan(&baris).Error
 	if err != nil {
 		return 0, nil, 0, err
 	}

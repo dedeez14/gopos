@@ -12,6 +12,7 @@ import (
 // selisihnya terhadap kas fisik yang dihitung kasir.
 type SesiKasir struct {
 	ID          uint   `gorm:"primaryKey"`
+	UsahaID     uint   `gorm:"index;not null;default:0"`
 	Nomor       string `gorm:"size:30;uniqueIndex;not null"`
 	UserID      uint   `gorm:"index;not null"`
 	User        *User

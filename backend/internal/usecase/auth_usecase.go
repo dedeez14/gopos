@@ -44,8 +44,9 @@ func NewAuthUsecase(
 // Klaim adalah isi JWT access token. Sengaja minimal: id + role cukup untuk
 // RBAC; data profil diambil dari DB saat dibutuhkan.
 type Klaim struct {
-	UserID uint        `json:"uid"`
-	Role   domain.Role `json:"role"`
+	UserID  uint        `json:"uid"`
+	UsahaID uint        `json:"usaha"`
+	Role    domain.Role `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -111,8 +112,9 @@ func (uc *AuthUsecase) VerifikasiAccess(tokenString string) (*Klaim, error) {
 func (uc *AuthUsecase) terbitkan(ctx context.Context, u *domain.User) (*domain.TokenPair, error) {
 	sekarang := time.Now()
 	klaim := &Klaim{
-		UserID: u.ID,
-		Role:   u.Role,
+		UserID:  u.ID,
+		UsahaID: u.UsahaID,
+		Role:    u.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   u.Email,
 			IssuedAt:  jwt.NewNumericDate(sekarang),

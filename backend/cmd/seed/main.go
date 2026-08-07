@@ -37,11 +37,18 @@ func main() {
 		log.Fatal().Err(err).Msg("gagal terhubung ke PostgreSQL")
 	}
 	if err := db.AutoMigrate(
+		&domain.Usaha{},
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
+	}
+
+	// ── usaha default ────────────────────────────────────────────────────
+	usaha := domain.Usaha{Kode: "DEMO", Nama: "Tuléh Demo", Aktif: true}
+	if err := db.Where(domain.Usaha{Kode: "DEMO"}).FirstOrCreate(&usaha).Error; err != nil {
+		log.Fatal().Err(err).Msg("gagal menyiapkan usaha default")
 	}
 
 	// ── akun default (GANTI SANDINYA lewat panel: menu Pengguna) ─────────
@@ -67,7 +74,8 @@ func main() {
 			log.Fatal().Err(err).Msg("gagal hash sandi")
 		}
 		if err := db.Create(&domain.User{
-			Nama: a.Nama, Email: a.Email, PasswordHash: string(hash),
+			UsahaID: usaha.ID,
+			Nama:    a.Nama, Email: a.Email, PasswordHash: string(hash),
 			Role: a.Role, Aktif: true,
 		}).Error; err != nil {
 			log.Fatal().Err(err).Msg("gagal membuat akun")
@@ -79,9 +87,9 @@ func main() {
 	kategoriID := map[string]uint{}
 	for _, nama := range []string{"Makanan", "Minuman", "Snack", "Sembako", "Lainnya"} {
 		var k domain.Kategori
-		err := db.Where("nama = ?", nama).First(&k).Error
+		err := db.Where("nama = ? AND usaha_id = ?", nama, usaha.ID).First(&k).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			k = domain.Kategori{Nama: nama}
+			k = domain.Kategori{Nama: nama, UsahaID: usaha.ID}
 			if err := db.Create(&k).Error; err != nil {
 				log.Fatal().Err(err).Msg("gagal membuat kategori")
 			}
@@ -110,7 +118,7 @@ func main() {
 	}
 	for _, p := range contoh {
 		var ada domain.Produk
-		err := db.Where("kode = ?", p.Kode).First(&ada).Error
+		err := db.Where("kode = ? AND usaha_id = ?", p.Kode, usaha.ID).First(&ada).Error
 		if err == nil {
 			continue
 		}
@@ -122,6 +130,7 @@ func main() {
 			p.KategoriID = &id
 		}
 		p.Aktif = true
+		p.UsahaID = usaha.ID
 		if err := db.Create(&p).Error; err != nil {
 			log.Fatal().Err(err).Msg("gagal membuat produk contoh")
 		}

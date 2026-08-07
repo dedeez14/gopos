@@ -42,6 +42,22 @@ implementasi DB di `repository/postgres/`, endpoint di `delivery/http/`.
 - Panel disajikan binari Go yang sama (`ADMIN_DIST=frontend/dist`, SPA
   fallback) — satu origin, tanpa CORS. Setelah `npm run build`, cukup refresh.
 
+## Multi-Tenant (Usaha)
+
+SATU deployment melayani BANYAK usaha (merchant) — meniru model MOVERA:
+- Entitas `Usaha`; semua tabel operasional ber-`usaha_id`.
+- Scoping ditanam di context request: middleware JWT menaruh `usaha_id`
+  klaim → repository postgres menambah `WHERE usaha_id = ?` (helper `skop`)
+  dan mengisi `usaha_id` saat Create. **Fail-closed**: lupa set = usaha 0 =
+  tak terlihat siapa pun, bukan bocor.
+- Unique per-usaha: kode produk & nama kategori komposit `(usaha_id, …)` —
+  dua usaha boleh punya kode produk yang sama.
+- `CariByID`/`CariByEmail` user sengaja global (alur refresh/login berjalan
+  sebelum usaha ada di context) — penolakan lintas usaha ada di usecase
+  (`pastikanSeUsaha`).
+- Usaha baru: sementara lewat seed/SQL (`usahas` + user owner-nya);
+  manajemen usaha via panel = pekerjaan berikutnya.
+
 ## Akun & Data Default
 
 Seeder (`go run ./cmd/seed`, idempoten — tidak menimpa data yang sudah

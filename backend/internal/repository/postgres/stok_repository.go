@@ -20,10 +20,11 @@ func NewStokRepository(db *gorm.DB) *StokRepository {
 }
 
 func (r *StokRepository) Masuk(ctx context.Context, produkID uint, delta float64, log *domain.StokLog) error {
+	isiUsaha(ctx, &log.UsahaID)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var sesudah float64
-		if err := tx.Raw(`UPDATE produks SET stok = stok + ?, updated_at = NOW() WHERE id = ? RETURNING stok`,
-			delta, produkID).Scan(&sesudah).Error; err != nil {
+		if err := tx.Raw(`UPDATE produks SET stok = stok + ?, updated_at = NOW() WHERE id = ? AND usaha_id = ? RETURNING stok`,
+			delta, produkID, log.UsahaID).Scan(&sesudah).Error; err != nil {
 			return err
 		}
 		log.StokSesudah = sesudah
@@ -32,9 +33,10 @@ func (r *StokRepository) Masuk(ctx context.Context, produkID uint, delta float64
 }
 
 func (r *StokRepository) SetAbsolut(ctx context.Context, produkID uint, stokBaru float64, log *domain.StokLog) error {
+	isiUsaha(ctx, &log.UsahaID)
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec(`UPDATE produks SET stok = ?, updated_at = NOW() WHERE id = ?`,
-			stokBaru, produkID).Error; err != nil {
+		if err := tx.Exec(`UPDATE produks SET stok = ?, updated_at = NOW() WHERE id = ? AND usaha_id = ?`,
+			stokBaru, produkID, log.UsahaID).Error; err != nil {
 			return err
 		}
 		log.StokSesudah = stokBaru
@@ -43,7 +45,7 @@ func (r *StokRepository) SetAbsolut(ctx context.Context, produkID uint, stokBaru
 }
 
 func (r *StokRepository) Riwayat(ctx context.Context, f domain.FilterStokLog) ([]domain.StokLog, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.StokLog{})
+	q := skop(ctx, r.db).Model(&domain.StokLog{})
 	if f.ProdukID != 0 {
 		q = q.Where("produk_id = ?", f.ProdukID)
 	}

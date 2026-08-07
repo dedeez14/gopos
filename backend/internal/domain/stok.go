@@ -12,6 +12,7 @@ import (
 // stoknya — riwayat tidak pernah bolong.
 type StokLog struct {
 	ID          uint `gorm:"primaryKey"`
+	UsahaID     uint `gorm:"index;not null;default:0"`
 	ProdukID    uint `gorm:"index;not null"`
 	Produk      *Produk
 	Jenis       string  `gorm:"size:10;not null;index"`      // MASUK | OPNAME | JUAL | BATAL

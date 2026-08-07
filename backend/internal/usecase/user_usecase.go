@@ -46,7 +46,25 @@ func (uc *UserUsecase) Daftar(ctx context.Context, f domain.FilterUser) ([]domai
 }
 
 func (uc *UserUsecase) Ambil(ctx context.Context, id uint) (*domain.User, error) {
-	return uc.repo.CariByID(ctx, id)
+	u, err := uc.repo.CariByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := pastikanSeUsaha(ctx, u.UsahaID); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+// pastikanSeUsaha menolak akses lintas usaha. CariByID user sengaja global
+// (dibutuhkan alur refresh token yang berjalan sebelum usaha ada di
+// context) — maka pemeriksaannya di sini. Context tanpa usaha (0) = alur
+// internal, lolos.
+func pastikanSeUsaha(ctx context.Context, usahaID uint) error {
+	if aktif := domain.UsahaDari(ctx); aktif != 0 && usahaID != aktif {
+		return domain.ErrTidakDitemukan
+	}
+	return nil
 }
 
 // Buat membuat pengguna baru. Email dinormalkan (lowercase) dan diperiksa
@@ -85,6 +103,9 @@ func (uc *UserUsecase) Perbarui(ctx context.Context, id uint, in InputUser) (*do
 	if err != nil {
 		return nil, err
 	}
+	if err := pastikanSeUsaha(ctx, u.UsahaID); err != nil {
+		return nil, err
+	}
 
 	email := strings.ToLower(strings.TrimSpace(in.Email))
 	if email != u.Email {
@@ -114,7 +135,11 @@ func (uc *UserUsecase) Perbarui(ctx context.Context, id uint, in InputUser) (*do
 }
 
 func (uc *UserUsecase) Hapus(ctx context.Context, id uint) error {
-	if _, err := uc.repo.CariByID(ctx, id); err != nil {
+	u, err := uc.repo.CariByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := pastikanSeUsaha(ctx, u.UsahaID); err != nil {
 		return err
 	}
 	return uc.repo.Hapus(ctx, id)

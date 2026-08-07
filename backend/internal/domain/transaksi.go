@@ -11,6 +11,7 @@ import (
 // terpisah, bukan mutasi diam-diam).
 type Transaksi struct {
 	ID             uint   `gorm:"primaryKey"`
+	UsahaID        uint   `gorm:"index;not null;default:0"`
 	Nomor          string `gorm:"size:30;uniqueIndex;not null"`
 	SesiKasirID    uint   `gorm:"index;not null"`
 	UserID         uint   `gorm:"index;not null"`

@@ -20,7 +20,8 @@ const (
 // Kategori produk — sederhana: penanda pengelompokan katalog.
 type Kategori struct {
 	ID        uint   `gorm:"primaryKey"`
-	Nama      string `gorm:"size:100;uniqueIndex;not null"`
+	UsahaID   uint   `gorm:"not null;default:0;uniqueIndex:uniq_kategori_usaha_nama"`
+	Nama      string `gorm:"size:100;not null;uniqueIndex:uniq_kategori_usaha_nama"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -33,7 +34,8 @@ type Kategori struct {
 // di atasnya.
 type Produk struct {
 	ID           uint       `gorm:"primaryKey"`
-	Kode         string     `gorm:"size:30;uniqueIndex;not null"`
+	UsahaID      uint       `gorm:"not null;default:0;uniqueIndex:uniq_produk_usaha_kode"`
+	Kode         string     `gorm:"size:30;not null;uniqueIndex:uniq_produk_usaha_kode"`
 	Nama         string     `gorm:"size:150;not null;index"`
 	Barcode      *string    `gorm:"size:60;index"`
 	Tipe         TipeProduk `gorm:"size:10;not null;default:BARANG"`

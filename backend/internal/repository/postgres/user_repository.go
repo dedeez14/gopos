@@ -22,6 +22,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 func (r *UserRepository) Simpan(ctx context.Context, u *domain.User) error {
+	isiUsaha(ctx, &u.UsahaID)
 	return r.db.WithContext(ctx).Create(u).Error
 }
 
@@ -54,7 +55,7 @@ func (r *UserRepository) CariByEmail(ctx context.Context, email string) (*domain
 // Daftar memakai query ber-parameter (?) — GORM men-escape nilainya; JANGAN
 // pernah merangkai input pengguna ke string SQL (pintu SQL injection).
 func (r *UserRepository) Daftar(ctx context.Context, f domain.FilterUser) ([]domain.User, int64, error) {
-	q := r.db.WithContext(ctx).Model(&domain.User{})
+	q := skop(ctx, r.db).Model(&domain.User{})
 	if f.Cari != "" {
 		pola := "%" + f.Cari + "%"
 		q = q.Where("nama ILIKE ? OR email ILIKE ?", pola, pola)

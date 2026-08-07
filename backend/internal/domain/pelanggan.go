@@ -11,6 +11,7 @@ import (
 // jadi dan pencarian tidak terpecah antara 08… dan 62….
 type Pelanggan struct {
 	ID        uint    `gorm:"primaryKey"`
+	UsahaID   uint    `gorm:"index;not null;default:0"`
 	Nama      string  `gorm:"size:150;not null;index"`
 	Telepon   *string `gorm:"size:20;index"`
 	Email     *string `gorm:"size:150"`
@@ -45,6 +46,7 @@ type PelangganRepository interface {
 // app tidak butuh migrasi server. Tidak menyentuh uang/stok.
 type Hold struct {
 	ID        uint   `gorm:"primaryKey"`
+	UsahaID   uint   `gorm:"index;not null;default:0"`
 	Label     string `gorm:"size:80"`
 	Payload   []byte `gorm:"type:jsonb;not null"`
 	UserID    uint   `gorm:"index;not null"`
@@ -70,6 +72,7 @@ type HoldRepository interface {
 // Laba = Omzet − Pengeluaran di laporan keuangan sederhana.
 type Pengeluaran struct {
 	ID         uint      `gorm:"primaryKey"`
+	UsahaID    uint      `gorm:"index;not null;default:0"`
 	Tanggal    time.Time `gorm:"type:date;not null;index"`
 	Keterangan string    `gorm:"size:255;not null"`
 	Nominal    float64   `gorm:"type:numeric(15,2);not null"`
