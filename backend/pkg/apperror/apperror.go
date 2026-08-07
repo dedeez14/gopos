@@ -25,12 +25,16 @@ func Status(err error) int {
 		errors.Is(err, domain.ErrTokenTidakSah):
 		return http.StatusUnauthorized
 	case errors.Is(err, domain.ErrUserNonaktif),
-		errors.Is(err, domain.ErrSesiBukanMilik):
+		errors.Is(err, domain.ErrSesiBukanMilik),
+		errors.Is(err, domain.ErrTrxBukanMilik):
 		return http.StatusForbidden
 	case errors.Is(err, domain.ErrSesiSudahBuka),
 		errors.Is(err, domain.ErrSesiBelumBuka),
 		errors.Is(err, domain.ErrSesiSudahTutup),
 		errors.Is(err, domain.ErrProdukNonaktif),
+		errors.Is(err, domain.ErrProdukTanpaStok),
+		errors.Is(err, domain.ErrTrxSudahBatal),
+		errors.Is(err, domain.ErrSesiTrxSudahTutup),
 		errors.Is(err, domain.ErrTeleponTerpakai),
 		errors.Is(err, domain.ErrHoldPenuh):
 		return http.StatusConflict

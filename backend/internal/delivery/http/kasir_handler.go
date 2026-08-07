@@ -355,6 +355,30 @@ func (h *KasirHandler) DaftarTransaksi(c echo.Context) error {
 	return respond.Sukses(c, hasil, respond.BuatMeta(halaman, perHal, total), "")
 }
 
+// BatalTransaksi godoc
+//
+//	@Summary		Batalkan transaksi (void) — stok kembali, status DIBATALKAN
+//	@Description	Hanya selama sesi transaksi masih BUKA. Kasir: transaksi sendiri; peran ber-izin laporan: milik siapa pun.
+//	@Tags			kasir
+//	@Produce		json
+//	@Param			id	path		int	true	"ID transaksi"
+//	@Success		200	{object}	respond.Amplop{data=StrukResponse}
+//	@Failure		409	{object}	respond.Amplop	"Sudah dibatalkan / sesi sudah tutup"
+//	@Security		BearerAuth
+//	@Router			/transaksi/{id}/batal [post]
+func (h *KasirHandler) BatalTransaksi(c echo.Context) error {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		return respond.Gagal(c, 400, "ID tidak valid.", nil)
+	}
+	role, _ := c.Get(middleware.CtxRole).(domain.Role)
+	t, err := h.transaksi.Batal(c.Request().Context(), uint(id), userID(c), role.Punya(domain.PermLaporan))
+	if err != nil {
+		return respond.Gagal(c, apperror.Status(err), apperror.Pesan(err), nil)
+	}
+	return respond.Sukses(c, keStruk(t), nil, "Transaksi dibatalkan.")
+}
+
 // AmbilTransaksi godoc
 //
 //	@Summary	Struk satu transaksi

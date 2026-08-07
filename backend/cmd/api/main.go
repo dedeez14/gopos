@@ -72,7 +72,7 @@ func main() {
 	if err := db.AutoMigrate(
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
-		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{},
+		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -109,6 +109,8 @@ func main() {
 	pengeluaranUC := usecase.NewPengeluaranUsecase(pengeluaranRepo)
 	pelangganUC := usecase.NewPelangganUsecase(pelangganRepo)
 	holdUC := usecase.NewHoldUsecase(holdRepo)
+	stokRepo := pgrepo.NewStokRepository(db)
+	inventoryUC := usecase.NewInventoryUsecase(produkRepo, stokRepo, sesiRepo)
 
 	semaiAdmin(db, cfg, log)
 
@@ -165,7 +167,7 @@ func main() {
 	e.Use(echomw.Recover())
 	e.Use(appmw.Keamanan(cfg.CORSOrigins, cfg.RateRPS)...)
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

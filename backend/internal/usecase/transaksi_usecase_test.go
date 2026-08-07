@@ -84,6 +84,14 @@ func (r *trxRepoPalsu) CariByIdempotency(_ context.Context, key string) (*domain
 func (r *trxRepoPalsu) Daftar(_ context.Context, _ domain.FilterTransaksi) ([]domain.Transaksi, int64, error) {
 	return nil, 0, nil
 }
+func (r *trxRepoPalsu) Batalkan(_ context.Context, t *domain.Transaksi, kembalikan map[uint]float64) error {
+	t.Status = domain.TrxDibatalkan
+	r.data[t.ID] = t
+	for id, qty := range kembalikan {
+		r.stokDipotong[id] -= qty
+	}
+	return nil
+}
 func (r *trxRepoPalsu) TotalSesi(_ context.Context, sesiID uint) (map[string]float64, error) {
 	total := map[string]float64{}
 	for _, t := range r.data {
@@ -271,5 +279,89 @@ func TestBukaSesiDobelDitolak(t *testing.T) {
 
 	if _, err := sesiUC.Buka(context.Background(), 7, 0, ""); err != domain.ErrSesiSudahBuka {
 		t.Fatalf("harap ErrSesiSudahBuka, dapat %v", err)
+	}
+}
+
+func TestBatalMengembalikanStokDanAturannya(t *testing.T) {
+	trxUC, sesiUC, produkRepo, repo := siapkanKasir(t)
+	ctx := context.Background()
+	p := tambahProduk(t, produkRepo, domain.Produk{Nama: "B", Kode: "BB", HargaJual: 5000, Aktif: true, KelolaStok: true, Stok: 10})
+
+	trx, err := trxUC.Checkout(ctx, 7, InputCheckout{
+		Items:          []ItemCheckout{{ProdukID: p.ID, Kuantitas: 3, Harga: 5000}},
+		TipePembayaran: domain.TipeTunai, Dibayar: 15000,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repo.stokDipotong[p.ID] != 3 {
+		t.Fatalf("stok terpotong %v", repo.stokDipotong[p.ID])
+	}
+
+	// Kasir lain (bukan pemilik, bukan manajemen) → ditolak.
+	if _, err := trxUC.Batal(ctx, trx.ID, 99, false); err != domain.ErrTrxBukanMilik {
+		t.Fatalf("harap ErrTrxBukanMilik, dapat %v", err)
+	}
+
+	// Pemilik membatalkan → stok kembali, status DIBATALKAN.
+	dibatal, err := trxUC.Batal(ctx, trx.ID, 7, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dibatal.Status != domain.TrxDibatalkan {
+		t.Fatalf("status = %s", dibatal.Status)
+	}
+	if repo.stokDipotong[p.ID] != 0 {
+		t.Fatalf("stok tidak kembali: %v", repo.stokDipotong[p.ID])
+	}
+
+	// Batal dua kali → ditolak.
+	if _, err := trxUC.Batal(ctx, trx.ID, 7, false); err != domain.ErrTrxSudahBatal {
+		t.Fatalf("harap ErrTrxSudahBatal, dapat %v", err)
+	}
+
+	// Transaksi dari sesi yang sudah ditutup → ditolak.
+	trx2, _ := trxUC.Checkout(ctx, 7, InputCheckout{
+		Items:          []ItemCheckout{{ProdukID: p.ID, Kuantitas: 1, Harga: 5000}},
+		TipePembayaran: domain.TipeTunai, Dibayar: 5000,
+	})
+	sesi, _ := sesiUC.Aktif(ctx, 7)
+	if _, err := sesiUC.Tutup(ctx, sesi.ID, 7, 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := trxUC.Batal(ctx, trx2.ID, 7, true); err != domain.ErrSesiTrxSudahTutup {
+		t.Fatalf("harap ErrSesiTrxSudahTutup, dapat %v", err)
+	}
+}
+
+func TestOpnameMenghitungSelisih(t *testing.T) {
+	produkRepo := newProdukRepoPalsu()
+	stokRepo := &stokRepoPalsu{}
+	uc := NewInventoryUsecase(produkRepo, stokRepo, newSesiRepoPalsu())
+	ctx := context.Background()
+
+	p := domain.Produk{Nama: "S", Kode: "S", HargaJual: 1000, Aktif: true, KelolaStok: true, Stok: 45}
+	if err := produkRepo.Simpan(ctx, &p); err != nil {
+		t.Fatal(err)
+	}
+
+	log, err := uc.Opname(ctx, 7, p.ID, 40, "hitung fisik")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if log.Jumlah != -5 {
+		t.Fatalf("selisih opname = %v, harap -5", log.Jumlah)
+	}
+	if stokRepo.setKe != 40 {
+		t.Fatalf("stok di-set ke %v", stokRepo.setKe)
+	}
+
+	// JASA / non-stok ditolak.
+	j := domain.Produk{Nama: "J", Kode: "J", HargaJual: 1000, Aktif: true, KelolaStok: false}
+	if err := produkRepo.Simpan(ctx, &j); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := uc.Masuk(ctx, 7, j.ID, 5, ""); err != domain.ErrProdukTanpaStok {
+		t.Fatalf("harap ErrProdukTanpaStok, dapat %v", err)
 	}
 }

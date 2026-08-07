@@ -51,13 +51,19 @@ type TransaksiItem struct {
 }
 
 const (
-	TrxSelesai   = "SELESAI"
-	TipeTunai    = "TUNAI"
-	TipeTransfer = "TRANSFER"
-	TipeQris     = "QRIS"
+	TrxSelesai    = "SELESAI"
+	TrxDibatalkan = "DIBATALKAN"
+	TipeTunai     = "TUNAI"
+	TipeTransfer  = "TRANSFER"
+	TipeQris      = "QRIS"
 )
 
-var ErrProdukNonaktif = errors.New("produk sudah dinonaktifkan")
+var (
+	ErrProdukNonaktif    = errors.New("produk sudah dinonaktifkan")
+	ErrTrxSudahBatal     = errors.New("transaksi sudah dibatalkan")
+	ErrTrxBukanMilik     = errors.New("transaksi ini bukan milik Anda")
+	ErrSesiTrxSudahTutup = errors.New("transaksi dari sesi yang sudah ditutup tidak bisa dibatalkan")
+)
 
 type FilterTransaksi struct {
 	SesiKasirID  uint // 0 = semua
@@ -75,6 +81,9 @@ type TransaksiRepository interface {
 	CariByID(ctx context.Context, id uint) (*Transaksi, error)
 	CariByIdempotency(ctx context.Context, key string) (*Transaksi, error)
 	Daftar(ctx context.Context, f FilterTransaksi) ([]Transaksi, int64, error)
+	// Batalkan: set status DIBATALKAN + kembalikan stok + log BATAL — satu
+	// transaksi DB. kembalikan: produkID → kuantitas.
+	Batalkan(ctx context.Context, t *Transaksi, kembalikan map[uint]float64) error
 	// TotalSesi: agregat sesi utk rekap tutup — total per tipe pembayaran.
 	TotalSesi(ctx context.Context, sesiID uint) (map[string]float64, error)
 }

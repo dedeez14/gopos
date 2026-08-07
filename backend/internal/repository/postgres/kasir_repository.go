@@ -99,10 +99,46 @@ func (r *TransaksiRepository) Checkout(ctx context.Context, t *domain.Transaksi,
 			return err
 		}
 		for produkID, qty := range potongStok {
-			// Ekspresi atomik (stok = stok − qty) — dua kasir menjual barang
-			// yang sama bersamaan tidak saling menimpa.
-			if err := tx.Model(&domain.Produk{}).Where("id = ?", produkID).
-				Update("stok", gorm.Expr("stok - ?", qty)).Error; err != nil {
+			// Ekspresi atomik + RETURNING — dua kasir menjual barang yang
+			// sama bersamaan tidak saling menimpa, dan log stok mendapat
+			// angka sesudah-mutasi yang benar.
+			var sesudah float64
+			if err := tx.Raw(`UPDATE produks SET stok = stok - ?, updated_at = NOW() WHERE id = ? RETURNING stok`,
+				qty, produkID).Scan(&sesudah).Error; err != nil {
+				return err
+			}
+			sesiID := t.SesiKasirID
+			if err := tx.Create(&domain.StokLog{
+				ProdukID: produkID, Jenis: domain.StokJual, Jumlah: -qty,
+				StokSesudah: sesudah, Keterangan: t.Nomor,
+				SesiKasirID: &sesiID, UserID: t.UserID,
+			}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// Batalkan: status DIBATALKAN + stok kembali + log BATAL — satu transaksi DB.
+func (r *TransaksiRepository) Batalkan(ctx context.Context, t *domain.Transaksi, kembalikan map[uint]float64) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&domain.Transaksi{}).Where("id = ?", t.ID).
+			Update("status", domain.TrxDibatalkan).Error; err != nil {
+			return err
+		}
+		for produkID, qty := range kembalikan {
+			var sesudah float64
+			if err := tx.Raw(`UPDATE produks SET stok = stok + ?, updated_at = NOW() WHERE id = ? RETURNING stok`,
+				qty, produkID).Scan(&sesudah).Error; err != nil {
+				return err
+			}
+			sesiID := t.SesiKasirID
+			if err := tx.Create(&domain.StokLog{
+				ProdukID: produkID, Jenis: domain.StokBatal, Jumlah: qty,
+				StokSesudah: sesudah, Keterangan: "Batal " + t.Nomor,
+				SesiKasirID: &sesiID, UserID: t.UserID,
+			}).Error; err != nil {
 				return err
 			}
 		}

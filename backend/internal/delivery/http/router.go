@@ -23,12 +23,14 @@ func DaftarkanRute(
 	pengeluaranUC *usecase.PengeluaranUsecase,
 	pelangganUC *usecase.PelangganUsecase,
 	holdUC *usecase.HoldUsecase,
+	inventoryUC *usecase.InventoryUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
 	produkH := NewProdukHandler(produkUC, kategoriUC)
 	kasirH := NewKasirHandler(sesiUC, transaksiUC)
 	laporanH := NewLaporanHandler(laporanUC, pengeluaranUC, pelangganUC, holdUC)
+	inventoryH := NewInventoryHandler(inventoryUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -72,6 +74,7 @@ func DaftarkanRute(
 	privat.GET("/sesi/:id/rekap", kasirH.RekapSesi, appmw.ButuhIzin(domain.PermKasir))
 
 	privat.POST("/transaksi/checkout", kasirH.Checkout, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/transaksi/:id/batal", kasirH.BatalTransaksi, appmw.ButuhIzin(domain.PermKasir))
 	privat.GET("/transaksi", kasirH.DaftarTransaksi, appmw.ButuhIzin(domain.PermKasir))
 	privat.GET("/transaksi/:id", kasirH.AmbilTransaksi, appmw.ButuhIzin(domain.PermKasir))
 
@@ -88,6 +91,11 @@ func DaftarkanRute(
 	privat.POST("/pelanggan/quick", laporanH.QuickPelanggan, appmw.ButuhIzin(domain.PermKasir))
 	privat.PUT("/pelanggan/:id", laporanH.PerbaruiPelanggan, appmw.ButuhIzin(domain.PermPelangganKelola))
 	privat.DELETE("/pelanggan/:id", laporanH.HapusPelanggan, appmw.ButuhIzin(domain.PermPelangganKelola))
+
+	// Inventory — restock/opname/riwayat khusus manajemen katalog (O/M).
+	privat.POST("/inventory/stok-masuk", inventoryH.StokMasuk, appmw.ButuhIzin(domain.PermProdukKelola))
+	privat.POST("/inventory/opname", inventoryH.Opname, appmw.ButuhIzin(domain.PermProdukKelola))
+	privat.GET("/inventory/riwayat", inventoryH.Riwayat, appmw.ButuhIzin(domain.PermProdukKelola))
 
 	// Hold — parkir keranjang, alat harian kasir.
 	privat.GET("/hold", laporanH.DaftarHold, appmw.ButuhIzin(domain.PermKasir))

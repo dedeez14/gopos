@@ -2,13 +2,16 @@
 // pajak, kembalian). Filter rentang tanggal server-side.
 
 import { useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Card, DatePicker, Descriptions, Divider, Drawer, Table, Tag, Typography,
+  Button, Card, DatePicker, Descriptions, Divider, Drawer, Popconfirm, Table,
+  Tag, Typography, message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
 import { daftarTransaksi, type Struk } from '../api/transaksi';
+import { batalTransaksi } from '../api/inventory';
+import { pesanError } from '../api/client';
 
 const rupiah = (n: number) => `Rp${n.toLocaleString('id-ID')}`;
 
@@ -19,6 +22,7 @@ const WARNA_BAYAR: Record<Struk['tipe_pembayaran'], string> = {
 };
 
 export default function TransaksiPage() {
+  const qc = useQueryClient();
   const [halaman, setHalaman] = useState(1);
   const [rentang, setRentang] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [detail, setDetail] = useState<Struk | null>(null);
@@ -34,6 +38,16 @@ export default function TransaksiPage() {
         tanggal_sampai: rentang?.[1]?.format('YYYY-MM-DD'),
       }),
     placeholderData: keepPreviousData,
+  });
+
+  const batal = useMutation({
+    mutationFn: batalTransaksi,
+    onSuccess: (struk) => {
+      message.success('Transaksi dibatalkan — stok dikembalikan.');
+      setDetail(struk);
+      qc.invalidateQueries({ queryKey: ['transaksi'] });
+    },
+    onError: (e) => message.error(pesanError(e)),
   });
 
   const kolom: ColumnsType<Struk> = [
@@ -57,6 +71,13 @@ export default function TransaksiPage() {
       width: 140,
       align: 'right',
       render: (v: number) => <strong>{rupiah(v)}</strong>,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      width: 120,
+      render: (s: string) =>
+        s === 'DIBATALKAN' ? <Tag color="red">DIBATALKAN</Tag> : <Tag color="success">SELESAI</Tag>,
     },
   ];
 
@@ -89,6 +110,20 @@ export default function TransaksiPage() {
 
       <Drawer
         title={detail?.nomor}
+        extra={
+          detail?.status === 'SELESAI' && (
+            <Popconfirm
+              title="Batalkan transaksi ini? Stok akan dikembalikan."
+              okText="Ya, batalkan"
+              cancelText="Tidak"
+              onConfirm={() => detail && batal.mutate(detail.id)}
+            >
+              <Button danger loading={batal.isPending}>
+                Batalkan
+              </Button>
+            </Popconfirm>
+          )
+        }
         open={Boolean(detail)}
         onClose={() => setDetail(null)}
         width={480}

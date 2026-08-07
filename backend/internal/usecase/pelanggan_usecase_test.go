@@ -224,3 +224,23 @@ func TestCheckoutDenganPelanggan(t *testing.T) {
 	}
 
 }
+
+// stok repo palsu utk uji inventory.
+type stokRepoPalsu struct {
+	masuk float64
+	setKe float64
+}
+
+func (r *stokRepoPalsu) Masuk(_ context.Context, _ uint, delta float64, log *domain.StokLog) error {
+	r.masuk += delta
+	log.StokSesudah = delta
+	return nil
+}
+func (r *stokRepoPalsu) SetAbsolut(_ context.Context, _ uint, stokBaru float64, log *domain.StokLog) error {
+	r.setKe = stokBaru
+	log.StokSesudah = stokBaru
+	return nil
+}
+func (r *stokRepoPalsu) Riwayat(_ context.Context, _ domain.FilterStokLog) ([]domain.StokLog, int64, error) {
+	return nil, 0, nil
+}

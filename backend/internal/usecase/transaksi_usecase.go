@@ -174,6 +174,46 @@ func (uc *TransaksiUsecase) Ambil(ctx context.Context, id uint) (*domain.Transak
 	return uc.transaksi.CariByID(ctx, id)
 }
 
+// Batal membatalkan transaksi SELESAI: status → DIBATALKAN + stok kembali.
+// Aturan:
+//   - hanya selama SESI transaksi masih BUKA — sesi yang sudah ditutup
+//     kasnya sudah dihitung; koreksi setelah itu = dokumen retur (menyusul),
+//     bukan mutasi diam-diam;
+//   - kasir hanya boleh membatalkan transaksinya sendiri; bolehLintas
+//     (peran ber-izin laporan) boleh membatalkan milik siapa pun.
+func (uc *TransaksiUsecase) Batal(ctx context.Context, trxID, userID uint, bolehLintas bool) (*domain.Transaksi, error) {
+	t, err := uc.transaksi.CariByID(ctx, trxID)
+	if err != nil {
+		return nil, err
+	}
+	if t.Status != domain.TrxSelesai {
+		return nil, domain.ErrTrxSudahBatal
+	}
+	if !bolehLintas && t.UserID != userID {
+		return nil, domain.ErrTrxBukanMilik
+	}
+	sesi, err := uc.sesi.CariByID(ctx, t.SesiKasirID)
+	if err != nil {
+		return nil, err
+	}
+	if sesi.Status != domain.SesiBuka {
+		return nil, domain.ErrSesiTrxSudahTutup
+	}
+
+	// Kembalikan stok hanya untuk item yang produknya kelola stok.
+	kembalikan := map[uint]float64{}
+	for _, it := range t.Items {
+		if p, err := uc.produk.CariByID(ctx, it.ProdukID); err == nil && p.KelolaStok {
+			kembalikan[it.ProdukID] += it.Kuantitas
+		}
+	}
+
+	if err := uc.transaksi.Batalkan(ctx, t, kembalikan); err != nil {
+		return nil, err
+	}
+	return uc.transaksi.CariByID(ctx, t.ID)
+}
+
 func (uc *TransaksiUsecase) Daftar(ctx context.Context, f domain.FilterTransaksi) ([]domain.Transaksi, int64, error) {
 	if f.Halaman < 1 {
 		f.Halaman = 1
