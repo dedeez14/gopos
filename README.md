@@ -33,6 +33,15 @@ frontend/
 ulangi pola `user`: entitas+kontrak di `domain/`, logika di `usecase/`,
 implementasi DB di `repository/postgres/`, endpoint di `delivery/http/`.
 
+## Akses Publik (fase-1, sudah terpasang di VPS)
+
+- **https://gopos.tatreport.com** — admin panel + API (`/api/v1`, `/swagger`).
+- Rantai: Cloudflare (proxied) → nginx `movera-proxy`
+  (`deploy/proxy/conf.d/gopos.conf` di repo movera2025, cert origin
+  `*.tatreport.com`) → host `172.21.0.1:8081` → systemd `tuleh-server`.
+- Panel disajikan binari Go yang sama (`ADMIN_DIST=frontend/dist`, SPA
+  fallback) — satu origin, tanpa CORS. Setelah `npm run build`, cukup refresh.
+
 ## Menjalankan Backend
 
 Prasyarat: Go ≥1.23, PostgreSQL ≥14, Redis ≥6.

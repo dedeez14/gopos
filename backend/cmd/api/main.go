@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -166,6 +167,20 @@ func main() {
 	}))
 	e.Use(echomw.Recover())
 	e.Use(appmw.Keamanan(cfg.CORSOrigins, cfg.RateRPS)...)
+
+	// Sajikan admin panel dari binari yang sama bila ADMIN_DIST diisi —
+	// SPA fallback (HTML5) utk rute React Router; /api & /swagger tetap API.
+	if cfg.AdminDist != "" {
+		e.Use(echomw.StaticWithConfig(echomw.StaticConfig{
+			Root:  cfg.AdminDist,
+			HTML5: true,
+			Skipper: func(c echo.Context) bool {
+				p := c.Request().URL.Path
+				return strings.HasPrefix(p, "/api") || strings.HasPrefix(p, "/swagger")
+			},
+		}))
+		log.Info().Str("dist", cfg.AdminDist).Msg("admin panel disajikan dari server ini")
+	}
 
 	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC)
 

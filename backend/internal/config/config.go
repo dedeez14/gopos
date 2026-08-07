@@ -45,6 +45,10 @@ type Config struct {
 	// Keamanan HTTP
 	CORSOrigins []string // daftar origin admin panel, dipisah koma
 	RateRPS     float64  // request/detik per IP (limiter umum)
+
+	// AdminDist: path build admin panel (frontend/dist). Terisi → server ini
+	// juga menyajikan panelnya (satu origin, tanpa urusan CORS). Kosong = API saja.
+	AdminDist string
 }
 
 // Muat membaca env → Config. Gagal keras (error, bukan diam) bila nilai wajib
@@ -75,6 +79,7 @@ func Muat() (*Config, error) {
 
 		CORSOrigins: strings.Split(ambil("CORS_ORIGINS", "http://localhost:5173"), ","),
 		RateRPS:     float64(ambilInt("RATE_RPS", 20)),
+		AdminDist:   ambil("ADMIN_DIST", ""),
 	}
 
 	if c.AppEnv == "production" {
