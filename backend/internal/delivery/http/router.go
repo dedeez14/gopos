@@ -17,10 +17,13 @@ func DaftarkanRute(
 	userUC *usecase.UserUsecase,
 	produkUC *usecase.ProdukUsecase,
 	kategoriUC *usecase.KategoriUsecase,
+	sesiUC *usecase.SesiUsecase,
+	transaksiUC *usecase.TransaksiUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
 	produkH := NewProdukHandler(produkUC, kategoriUC)
+	kasirH := NewKasirHandler(sesiUC, transaksiUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -54,4 +57,16 @@ func DaftarkanRute(
 	privat.GET("/kategori", produkH.DaftarKategori, appmw.ButuhIzin(domain.PermKasir))
 	privat.POST("/kategori", produkH.BuatKategori, appmw.ButuhIzin(domain.PermProdukKelola))
 	privat.DELETE("/kategori/:id", produkH.HapusKategori, appmw.ButuhIzin(domain.PermProdukKelola))
+
+	// Kasir: sesi + checkout + riwayat (semua peran); daftar SEMUA sesi
+	// khusus pemegang izin laporan. Literal (/aktif) sebelum /:id.
+	privat.POST("/sesi/buka", kasirH.BukaSesi, appmw.ButuhIzin(domain.PermKasir))
+	privat.POST("/sesi/tutup", kasirH.TutupSesi, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/sesi/aktif", kasirH.SesiAktif, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/sesi", kasirH.DaftarSesi, appmw.ButuhIzin(domain.PermLaporan))
+	privat.GET("/sesi/:id/rekap", kasirH.RekapSesi, appmw.ButuhIzin(domain.PermKasir))
+
+	privat.POST("/transaksi/checkout", kasirH.Checkout, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/transaksi", kasirH.DaftarTransaksi, appmw.ButuhIzin(domain.PermKasir))
+	privat.GET("/transaksi/:id", kasirH.AmbilTransaksi, appmw.ButuhIzin(domain.PermKasir))
 }

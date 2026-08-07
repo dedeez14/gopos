@@ -6,6 +6,7 @@ import AdminLayout from './layout/AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import ProdukPage from './pages/ProdukPage';
+import TransaksiPage from './pages/TransaksiPage';
 import UsersPage from './pages/UsersPage';
 import { auth } from './lib/auth';
 
@@ -26,6 +27,7 @@ export default function App() {
       >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/produk" element={<ProdukPage />} />
+        <Route path="/transaksi" element={<TransaksiPage />} />
         <Route path="/users" element={<UsersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
