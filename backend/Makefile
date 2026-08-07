@@ -16,3 +16,6 @@ swag: ## regenerasi dokumentasi Swagger → docs/
 
 test:
 	go test ./...
+
+sinkron: ## salin master data dari MOVERA (baca-saja, idempoten)
+	set -a; . ./.env; set +a; go run ./cmd/sinkron

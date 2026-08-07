@@ -75,6 +75,23 @@ curl -s localhost:8081/api/v1/auth/login -H 'Content-Type: application/json' \
 # → {success:true, data:{access_token, refresh_token, user...}}
 ```
 
+## Sinkron Data dari MOVERA (fase-2)
+
+Replika baca master data (produk+kategori+pelanggan) dari MySQL MOVERA untuk
+satu company — MOVERA tetap system-of-record, tidak ada tulis-balik:
+
+```bash
+cd backend
+set -a; source .env; set +a      # SINKRON_MYSQL_DSN (user SELECT-only) + SINKRON_COMPANY_KODE
+go run ./cmd/sinkron             # idempoten — aman diulang / dijadwalkan (cron)
+```
+
+- Upsert by `kode` (produk/kategori) & telepon-ternormalisasi (pelanggan).
+- Stok dihitung dari `SUM(persediaan_lapisan_stok.sisa_kuantitas)` — kolom
+  `stok_saat_ini` MOVERA adalah kolom mati, jangan dipakai.
+- Verifikasi paritas Laravel-vs-Go pernah 27/27 COCOK (nama, harga, favorit,
+  stok) — jalankan pembanding serupa setiap selesai mengubah pemetaan.
+
 ## Menjalankan Frontend
 
 ```bash
