@@ -16,6 +16,7 @@ import { daftarPelanggan } from '../api/laporan';
 import { daftarProduk } from '../api/produk';
 import { daftarUsers } from '../api/users';
 import { auth } from '../lib/auth';
+import TrenOmzet from '../components/TrenOmzet';
 
 const rupiah = (n: number) => `Rp${n.toLocaleString('id-ID')}`;
 
@@ -185,6 +186,12 @@ export default function DashboardPage() {
           </Col>
         )}
       </Row>
+
+      {bisaLaporan && (
+        <div style={{ marginTop: 18 }}>
+          <TrenOmzet />
+        </div>
+      )}
 
       {bisaLaporan && (
         <Typography.Paragraph type="secondary" style={{ marginTop: 16, fontSize: 13 }}>

@@ -11,6 +11,14 @@ export interface RingkasanKeuangan {
   laba: number;
 }
 
+export interface PenjualanHarian {
+  tanggal: string;
+  jumlah_trx: number;
+  omzet: number;
+  diskon: number;
+  pajak: number;
+}
+
 export interface ProdukTerlaris {
   produk_id: number;
   nama: string;
@@ -38,6 +46,13 @@ export interface Pelanggan {
 
 export async function keuangan(bulan?: string): Promise<RingkasanKeuangan> {
   const res = await api.get<Amplop<RingkasanKeuangan>>('/laporan/keuangan', { params: { bulan } });
+  return bukaAmplop(res.data);
+}
+
+export async function penjualanHarian(dari?: string, sampai?: string): Promise<PenjualanHarian[]> {
+  const res = await api.get<Amplop<PenjualanHarian[]>>('/laporan/penjualan-harian', {
+    params: { dari, sampai },
+  });
   return bukaAmplop(res.data);
 }
 

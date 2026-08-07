@@ -65,6 +65,9 @@ func (h *LaporanHandler) PenjualanHarian(c echo.Context) error {
 	if err != nil {
 		return respond.Gagal(c, apperror.Status(err), apperror.Pesan(err), nil)
 	}
+	if rows == nil {
+		rows = []domain.PenjualanHarian{}
+	}
 	return respond.Sukses(c, rows, nil, "")
 }
 
@@ -84,6 +87,9 @@ func (h *LaporanHandler) ProdukTerlaris(c echo.Context) error {
 	rows, err := h.laporan.ProdukTerlaris(c.Request().Context(), hari, limit)
 	if err != nil {
 		return respond.Gagal(c, apperror.Status(err), apperror.Pesan(err), nil)
+	}
+	if rows == nil {
+		rows = []domain.ProdukTerlaris{}
 	}
 	return respond.Sukses(c, rows, nil, "")
 }

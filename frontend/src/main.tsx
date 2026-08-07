@@ -6,7 +6,12 @@ import { App as AntdApp, ConfigProvider, Empty } from 'antd';
 import idID from 'antd/locale/id_ID';
 import App from './App';
 import { temaTuleh } from './theme';
+import dayjs from 'dayjs';
+import 'dayjs/locale/id';
 import './index.css';
+
+// Nama hari/bulan Bahasa Indonesia untuk seluruh format tanggal (grafik, dll).
+dayjs.locale('id');
 
 // Satu QueryClient untuk seluruh app; default konservatif supaya tidak
 // membanjiri server (refetch saat fokus dimatikan, retry sekali).
