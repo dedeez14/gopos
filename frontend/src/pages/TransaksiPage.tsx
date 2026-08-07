@@ -70,7 +70,7 @@ export default function TransaksiPage() {
       dataIndex: 'grand_total',
       width: 140,
       align: 'right',
-      render: (v: number) => <strong>{rupiah(v)}</strong>,
+      render: (v: number) => <strong className="uang">{rupiah(v)}</strong>,
     },
     {
       title: 'Status',
@@ -176,7 +176,7 @@ export default function TransaksiPage() {
               </Descriptions.Item>
               <Descriptions.Item label="Pajak">{rupiah(detail.total_pajak)}</Descriptions.Item>
               <Descriptions.Item label="Grand Total">
-                <strong>{rupiah(detail.grand_total)}</strong>
+                <strong className="uang">{rupiah(detail.grand_total)}</strong>
               </Descriptions.Item>
               <Descriptions.Item label="Dibayar">{rupiah(detail.dibayar)}</Descriptions.Item>
               <Descriptions.Item label="Kembalian">{rupiah(detail.kembalian)}</Descriptions.Item>

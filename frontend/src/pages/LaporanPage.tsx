@@ -152,7 +152,7 @@ export default function LaporanPage() {
                   dataIndex: 'nominal',
                   align: 'right',
                   width: 130,
-                  render: rupiah,
+                  render: (v: number) => <span className="uang">{rupiah(v)}</span>,
                 },
                 {
                   title: '',
@@ -185,7 +185,7 @@ export default function LaporanPage() {
                   dataIndex: 'omzet',
                   align: 'right',
                   width: 130,
-                  render: rupiah,
+                  render: (v: number) => <span className="uang">{rupiah(v)}</span>,
                 },
               ]}
             />

@@ -144,13 +144,15 @@ export default function ProdukPage() {
       render: (_, p) =>
         p.promo_aktif ? (
           <Space direction="vertical" size={0}>
-            <Typography.Text delete type="secondary">
+            <Typography.Text delete type="secondary" className="uang">
               {rupiah(p.harga_jual)}
             </Typography.Text>
-            <Tag color="red">{rupiah(p.harga_efektif)} PROMO</Tag>
+            <Tag color="red" className="uang">
+              {rupiah(p.harga_efektif)} PROMO
+            </Tag>
           </Space>
         ) : (
-          rupiah(p.harga_jual)
+          <span className="uang">{rupiah(p.harga_jual)}</span>
         ),
     },
     {
