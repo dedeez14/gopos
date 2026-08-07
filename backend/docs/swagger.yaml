@@ -109,6 +109,25 @@ definitions:
     - items
     - tipe_pembayaran
     type: object
+  http.GatewayResponse:
+    properties:
+      aktif:
+        type: boolean
+      client_key:
+        type: string
+      env:
+        type: string
+      merchant_id:
+        type: string
+      platform_aktif:
+        type: boolean
+      server_key_hint:
+        type: string
+      server_key_terisi:
+        type: boolean
+      siap:
+        type: boolean
+    type: object
   http.HoldResponse:
     properties:
       dibuat:
@@ -368,6 +387,29 @@ definitions:
         description: omzet per tipe bayar (rekap)
         type: object
     type: object
+  http.SimpanGatewayRequest:
+    properties:
+      aktif:
+        type: boolean
+      client_key:
+        maxLength: 120
+        type: string
+      env:
+        enum:
+        - sandbox
+        - production
+        type: string
+      merchant_id:
+        maxLength: 60
+        type: string
+      server_key:
+        description: kosong = tak diubah
+        maxLength: 120
+        type: string
+    required:
+    - aktif
+    - env
+    type: object
   http.SimpanHoldRequest:
     properties:
       label:
@@ -567,6 +609,15 @@ definitions:
     - nama
     - role
     type: object
+  http.StatusGatewayResponse:
+    properties:
+      client_key:
+        type: string
+      env:
+        type: string
+      siap:
+        type: boolean
+    type: object
   http.StokLogResponse:
     properties:
       id:
@@ -671,6 +722,8 @@ definitions:
     properties:
       aktif:
         type: boolean
+      midtrans_aktif:
+        type: boolean
       nama:
         maxLength: 150
         minLength: 2
@@ -686,6 +739,8 @@ definitions:
         type: integer
       kode:
         type: string
+      midtrans_aktif:
+        type: boolean
       nama:
         type: string
     type: object
@@ -841,6 +896,79 @@ paths:
       summary: Tukar refresh token dengan pasangan token baru (rotasi)
       tags:
       - auth
+  /gateway/midtrans:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.GatewayResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Konfigurasi Midtrans merchant (server key BERTOPENG)
+      tags:
+      - gateway
+    put:
+      consumes:
+      - application/json
+      description: Ditolak (403) bila modul Midtrans belum diaktifkan platform. server_key
+        dikosongkan → key tersimpan dipertahankan.
+      parameters:
+      - description: Konfigurasi
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/http.SimpanGatewayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.GatewayResponse'
+              type: object
+        "403":
+          description: Modul Midtrans belum aktif
+          schema:
+            $ref: '#/definitions/respond.Amplop'
+      security:
+      - BearerAuth: []
+      summary: Simpan konfigurasi Midtrans (Owner/Manager)
+      tags:
+      - gateway
+  /gateway/midtrans/status:
+    get:
+      description: siap=true → tampilkan opsi QRIS dinamis; client_key aman dipakai
+        SDK klien.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/respond.Amplop'
+            - properties:
+                data:
+                  $ref: '#/definitions/http.StatusGatewayResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Status Midtrans untuk aplikasi kasir (tanpa server key)
+      tags:
+      - gateway
   /hold:
     get:
       produces:

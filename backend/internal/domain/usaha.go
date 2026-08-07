@@ -16,12 +16,16 @@ import (
 //   - Lupa set → UsahaID 0 → tidak cocok dengan scope siapa pun → data
 //     "hilang" (ketahuan saat uji), BUKAN bocor ke usaha lain.
 type Usaha struct {
-	ID        uint   `gorm:"primaryKey"`
-	Kode      string `gorm:"size:30;uniqueIndex;not null"`
-	Nama      string `gorm:"size:150;not null"`
-	Aktif     bool   `gorm:"not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID   uint   `gorm:"primaryKey"`
+	Kode string `gorm:"size:30;uniqueIndex;not null"`
+	Nama string `gorm:"size:150;not null"`
+	// Aktif=false → seluruh pengguna usaha ini ditolak login (suspend).
+	Aktif bool `gorm:"not null"`
+	// MidtransAktif = SAKLAR PLATFORM modul Midtrans (SUPERADMIN). false →
+	// merchant tak bisa mengonfigurasi/memakai gateway Midtrans.
+	MidtransAktif bool `gorm:"not null;default:false"`
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 var (

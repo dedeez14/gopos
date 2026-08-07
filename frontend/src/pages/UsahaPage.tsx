@@ -15,6 +15,7 @@ interface Usaha {
   kode: string;
   nama: string;
   aktif: boolean;
+  midtrans_aktif: boolean;
   dibuat: string;
 }
 
@@ -67,6 +68,16 @@ export default function UsahaPage() {
     onError: (e) => message.error(pesanError(e)),
   });
 
+  const toggleMidtrans = useMutation({
+    mutationFn: (v: { id: number; on: boolean }) =>
+      api.patch(`/usahas/${v.id}`, { midtrans_aktif: v.on }),
+    onSuccess: (_r, v) => {
+      message.success(v.on ? 'Modul Midtrans diaktifkan untuk usaha ini.' : 'Modul Midtrans dimatikan.');
+      segarkan();
+    },
+    onError: (e) => message.error(pesanError(e)),
+  });
+
   const kolom: ColumnsType<Usaha> = [
     { title: 'Kode', dataIndex: 'kode', width: 140 },
     { title: 'Nama Usaha', dataIndex: 'nama' },
@@ -89,6 +100,22 @@ export default function UsahaPage() {
             loading={toggle.isPending}
             onChange={(v) => toggle.mutate({ id: u.id, aktif: v })}
           />
+        </Space>
+      ),
+    },
+    {
+      title: 'Modul Midtrans',
+      dataIndex: 'midtrans_aktif',
+      width: 150,
+      render: (on: boolean, u) => (
+        <Space>
+          <Switch
+            size="small"
+            checked={on}
+            loading={toggleMidtrans.isPending}
+            onChange={(v) => toggleMidtrans.mutate({ id: u.id, on: v })}
+          />
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{on ? 'aktif' : 'nonaktif'}</span>
         </Space>
       ),
     },

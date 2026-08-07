@@ -40,6 +40,7 @@ import (
 	pgrepo "github.com/tuleh-pos/server/internal/repository/postgres"
 	redisrepo "github.com/tuleh-pos/server/internal/repository/redis"
 	"github.com/tuleh-pos/server/internal/usecase"
+	"github.com/tuleh-pos/server/pkg/rahasia"
 	"github.com/tuleh-pos/server/pkg/respond"
 	"github.com/tuleh-pos/server/pkg/validasi"
 	// Hasil `swag init` — aktifkan baris di bawah setelah docs dihasilkan:
@@ -75,7 +76,7 @@ func main() {
 		&domain.User{}, &domain.Kategori{}, &domain.Produk{},
 		&domain.SesiKasir{}, &domain.Transaksi{}, &domain.TransaksiItem{},
 		&domain.Pelanggan{}, &domain.Hold{}, &domain.Pengeluaran{}, &domain.StokLog{},
-		&domain.Pengaturan{}, &domain.MetodePembayaran{},
+		&domain.Pengaturan{}, &domain.MetodePembayaran{}, &domain.GatewayMidtrans{},
 	); err != nil {
 		log.Fatal().Err(err).Msg("migrasi gagal")
 	}
@@ -99,7 +100,7 @@ func main() {
 	for _, tabel := range []string{
 		"users", "kategoris", "produks", "sesi_kasirs", "transaksis",
 		"pelanggans", "holds", "pengeluarans", "stok_logs", "pengaturans",
-		"metode_pembayarans",
+		"metode_pembayarans", "gateway_midtrans",
 	} {
 		if err := db.Exec("UPDATE "+tabel+" SET usaha_id = ? WHERE usaha_id = 0", usahaDefault.ID).Error; err != nil {
 			log.Fatal().Err(err).Str("tabel", tabel).Msg("backfill usaha gagal")
@@ -146,6 +147,13 @@ func main() {
 	pengaturanUC := usecase.NewPengaturanUsecase(pengaturanRepo, usahaRepo)
 	metodeRepo := pgrepo.NewMetodePembayaranRepository(db)
 	metodeUC := usecase.NewMetodePembayaranUsecase(metodeRepo)
+
+	kotak, err := rahasia.Baru(cfg.EncKey)
+	if err != nil {
+		log.Fatal().Err(err).Msg("gagal menyiapkan enkripsi rahasia")
+	}
+	gatewayRepo := pgrepo.NewGatewayMidtransRepository(db)
+	gatewayUC := usecase.NewGatewayUsecase(gatewayRepo, usahaRepo, kotak)
 
 	semaiAdmin(db, cfg, usahaDefault.ID, log)
 
@@ -228,7 +236,7 @@ func main() {
 		log.Info().Str("dist", cfg.AdminDist).Msg("admin panel disajikan dari server ini")
 	}
 
-	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC, pengaturanUC, metodeUC)
+	deliveryhttp.DaftarkanRute(e, authUC, userUC, produkUC, kategoriUC, sesiUC, transaksiUC, laporanUC, pengeluaranUC, pelangganUC, holdUC, inventoryUC, usahaUC, pengaturanUC, metodeUC, gatewayUC)
 
 	// ── Jalankan + graceful shutdown ─────────────────────────────────────
 	go func() {

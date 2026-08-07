@@ -27,6 +27,7 @@ func DaftarkanRute(
 	usahaUC *usecase.UsahaUsecase,
 	pengaturanUC *usecase.PengaturanUsecase,
 	metodeUC *usecase.MetodePembayaranUsecase,
+	gatewayUC *usecase.GatewayUsecase,
 ) {
 	authH := NewAuthHandler(authUC)
 	userH := NewUserHandler(userUC)
@@ -37,6 +38,7 @@ func DaftarkanRute(
 	usahaH := NewUsahaHandler(usahaUC)
 	pengaturanH := NewPengaturanHandler(pengaturanUC)
 	metodeH := NewMetodePembayaranHandler(metodeUC)
+	gatewayH := NewGatewayHandler(gatewayUC)
 
 	// Dokumentasi Swagger (hasil `swag init`): /swagger/index.html
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
@@ -114,6 +116,12 @@ func DaftarkanRute(
 	privat.POST("/metode-bayar", metodeH.Buat, appmw.ButuhIzin(domain.PermPengaturanKelola))
 	privat.PUT("/metode-bayar/:id", metodeH.Perbarui, appmw.ButuhIzin(domain.PermPengaturanKelola))
 	privat.DELETE("/metode-bayar/:id", metodeH.Hapus, appmw.ButuhIzin(domain.PermPengaturanKelola))
+
+	// Gateway Midtrans (lapisan 2): KONFIG server key khusus O/M; STATUS ringkas
+	// (tanpa server key) untuk aplikasi kasir. Literal /status sebelum tak ada :id.
+	privat.GET("/gateway/midtrans", gatewayH.AmbilKonfig, appmw.ButuhIzin(domain.PermPengaturanKelola))
+	privat.PUT("/gateway/midtrans", gatewayH.SimpanKonfig, appmw.ButuhIzin(domain.PermPengaturanKelola))
+	privat.GET("/gateway/midtrans/status", gatewayH.Status, appmw.ButuhIzin(domain.PermKasir))
 
 	// Usaha (tenant) — level PLATFORM, khusus SUPERADMIN.
 	privat.GET("/usahas", usahaH.Daftar, appmw.ButuhIzin(domain.PermUsahaKelola))

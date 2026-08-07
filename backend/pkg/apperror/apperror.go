@@ -24,7 +24,8 @@ func Status(err error) int {
 	case errors.Is(err, domain.ErrKredensialSalah),
 		errors.Is(err, domain.ErrTokenTidakSah):
 		return http.StatusUnauthorized
-	case errors.Is(err, domain.ErrUsahaNonaktif):
+	case errors.Is(err, domain.ErrUsahaNonaktif),
+		errors.Is(err, domain.ErrModulMidtransMati):
 		return http.StatusForbidden
 	case errors.Is(err, domain.ErrUserNonaktif),
 		errors.Is(err, domain.ErrSesiBukanMilik),

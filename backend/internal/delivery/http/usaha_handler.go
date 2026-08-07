@@ -22,17 +22,19 @@ func NewUsahaHandler(usahas *usecase.UsahaUsecase) *UsahaHandler {
 }
 
 type UsahaResponse struct {
-	ID     uint   `json:"id"`
-	Kode   string `json:"kode"`
-	Nama   string `json:"nama"`
-	Aktif  bool   `json:"aktif"`
-	Dibuat string `json:"dibuat"`
+	ID            uint   `json:"id"`
+	Kode          string `json:"kode"`
+	Nama          string `json:"nama"`
+	Aktif         bool   `json:"aktif"`
+	MidtransAktif bool   `json:"midtrans_aktif"`
+	Dibuat        string `json:"dibuat"`
 }
 
 func keUsahaResponse(u *domain.Usaha) UsahaResponse {
 	return UsahaResponse{
 		ID: u.ID, Kode: u.Kode, Nama: u.Nama, Aktif: u.Aktif,
-		Dibuat: u.CreatedAt.Format(time.RFC3339),
+		MidtransAktif: u.MidtransAktif,
+		Dibuat:        u.CreatedAt.Format(time.RFC3339),
 	}
 }
 
@@ -45,8 +47,9 @@ type BuatUsahaRequest struct {
 }
 
 type UbahUsahaRequest struct {
-	Nama  string `json:"nama" validate:"omitempty,min=2,max=150"`
-	Aktif *bool  `json:"aktif"`
+	Nama          string `json:"nama" validate:"omitempty,min=2,max=150"`
+	Aktif         *bool  `json:"aktif"`
+	MidtransAktif *bool  `json:"midtrans_aktif"`
 }
 
 // Daftar godoc
@@ -130,7 +133,7 @@ func (h *UsahaHandler) Perbarui(c echo.Context) error {
 		return err
 	}
 	u, err := h.usahas.Perbarui(c.Request().Context(), uint(id), usecase.InputUbahUsaha{
-		Nama: req.Nama, Aktif: req.Aktif,
+		Nama: req.Nama, Aktif: req.Aktif, MidtransAktif: req.MidtransAktif,
 	})
 	if err != nil {
 		return respond.Gagal(c, apperror.Status(err), apperror.Pesan(err), nil)

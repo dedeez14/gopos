@@ -42,6 +42,10 @@ type Config struct {
 	AdminEmail string
 	AdminPass  string
 
+	// EncKey: kunci enkripsi rahasia at-rest (mis. server key Midtrans merchant).
+	// Diturunkan ke 32 byte via SHA-256, jadi panjang bebas. WAJIB di production.
+	EncKey string
+
 	// Keamanan HTTP
 	CORSOrigins []string // daftar origin admin panel, dipisah koma
 	RateRPS     float64  // request/detik per IP (limiter umum)
@@ -76,6 +80,7 @@ func Muat() (*Config, error) {
 		AdminNama:  ambil("ADMIN_NAMA", "Admin Tuléh"),
 		AdminEmail: ambil("ADMIN_EMAIL", "admin@tuleh.local"),
 		AdminPass:  ambil("ADMIN_PASS", "admin1234"),
+		EncKey:     ambil("ENC_KEY", "ganti-di-produksi-enc"),
 
 		CORSOrigins: strings.Split(ambil("CORS_ORIGINS", "http://localhost:5173"), ","),
 		RateRPS:     float64(ambilInt("RATE_RPS", 20)),
@@ -88,6 +93,9 @@ func Muat() (*Config, error) {
 		}
 		if c.AdminPass == "admin1234" {
 			return nil, fmt.Errorf("ADMIN_PASS wajib diganti di production")
+		}
+		if c.EncKey == "ganti-di-produksi-enc" {
+			return nil, fmt.Errorf("ENC_KEY wajib diisi di production")
 		}
 	}
 

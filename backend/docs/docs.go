@@ -162,6 +162,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/gateway/midtrans": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gateway"
+                ],
+                "summary": "Konfigurasi Midtrans merchant (server key BERTOPENG)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.GatewayResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ditolak (403) bila modul Midtrans belum diaktifkan platform. server_key dikosongkan → key tersimpan dipertahankan.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gateway"
+                ],
+                "summary": "Simpan konfigurasi Midtrans (Owner/Manager)",
+                "parameters": [
+                    {
+                        "description": "Konfigurasi",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/http.SimpanGatewayRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.GatewayResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Modul Midtrans belum aktif",
+                        "schema": {
+                            "$ref": "#/definitions/respond.Amplop"
+                        }
+                    }
+                }
+            }
+        },
+        "/gateway/midtrans/status": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "siap=true → tampilkan opsi QRIS dinamis; client_key aman dipakai SDK klien.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gateway"
+                ],
+                "summary": "Status Midtrans untuk aplikasi kasir (tanpa server key)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/respond.Amplop"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/http.StatusGatewayResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/hold": {
             "get": {
                 "security": [
@@ -2706,6 +2834,35 @@ const docTemplate = `{
                 }
             }
         },
+        "http.GatewayResponse": {
+            "type": "object",
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "client_key": {
+                    "type": "string"
+                },
+                "env": {
+                    "type": "string"
+                },
+                "merchant_id": {
+                    "type": "string"
+                },
+                "platform_aktif": {
+                    "type": "boolean"
+                },
+                "server_key_hint": {
+                    "type": "string"
+                },
+                "server_key_terisi": {
+                    "type": "boolean"
+                },
+                "siap": {
+                    "type": "boolean"
+                }
+            }
+        },
         "http.HoldResponse": {
             "type": "object",
             "properties": {
@@ -3091,6 +3248,38 @@ const docTemplate = `{
                 }
             }
         },
+        "http.SimpanGatewayRequest": {
+            "type": "object",
+            "required": [
+                "aktif",
+                "env"
+            ],
+            "properties": {
+                "aktif": {
+                    "type": "boolean"
+                },
+                "client_key": {
+                    "type": "string",
+                    "maxLength": 120
+                },
+                "env": {
+                    "type": "string",
+                    "enum": [
+                        "sandbox",
+                        "production"
+                    ]
+                },
+                "merchant_id": {
+                    "type": "string",
+                    "maxLength": 60
+                },
+                "server_key": {
+                    "description": "kosong = tak diubah",
+                    "type": "string",
+                    "maxLength": 120
+                }
+            }
+        },
         "http.SimpanHoldRequest": {
             "type": "object",
             "required": [
@@ -3363,6 +3552,20 @@ const docTemplate = `{
                 }
             }
         },
+        "http.StatusGatewayResponse": {
+            "type": "object",
+            "properties": {
+                "client_key": {
+                    "type": "string"
+                },
+                "env": {
+                    "type": "string"
+                },
+                "siap": {
+                    "type": "boolean"
+                }
+            }
+        },
         "http.StokLogResponse": {
             "type": "object",
             "properties": {
@@ -3519,6 +3722,9 @@ const docTemplate = `{
                 "aktif": {
                     "type": "boolean"
                 },
+                "midtrans_aktif": {
+                    "type": "boolean"
+                },
                 "nama": {
                     "type": "string",
                     "maxLength": 150,
@@ -3540,6 +3746,9 @@ const docTemplate = `{
                 },
                 "kode": {
                     "type": "string"
+                },
+                "midtrans_aktif": {
+                    "type": "boolean"
                 },
                 "nama": {
                     "type": "string"

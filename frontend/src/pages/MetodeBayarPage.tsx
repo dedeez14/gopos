@@ -35,6 +35,7 @@ import {
   type MetodeBayar,
 } from '../api/metodePembayaran';
 import { auth } from '../lib/auth';
+import GatewayMidtransCard from '../components/GatewayMidtransCard';
 
 const META: Record<JenisMetode, { warna: string; ikon: React.ReactNode; label: string }> = {
   BANK: { warna: 'blue', ikon: <BankOutlined />, label: 'Transfer Bank' },
@@ -148,7 +149,9 @@ export default function MetodeBayarPage() {
   ];
 
   return (
-    <Card>
+    <>
+      {bisaKelola && <GatewayMidtransCard />}
+      <Card>
       <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 6 }}>
         <Typography.Title level={4} style={{ margin: 0 }}>
           Metode Pembayaran
@@ -271,6 +274,7 @@ export default function MetodeBayarPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+      </Card>
+    </>
   );
 }

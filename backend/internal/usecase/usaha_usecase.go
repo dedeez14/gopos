@@ -84,8 +84,9 @@ func (uc *UsahaUsecase) Daftar(ctx context.Context, f domain.FilterUsaha) ([]dom
 }
 
 type InputUbahUsaha struct {
-	Nama  string
-	Aktif *bool
+	Nama          string
+	Aktif         *bool
+	MidtransAktif *bool // saklar platform modul Midtrans
 }
 
 // Perbarui — ganti nama / SUSPEND (aktif=false menolak login seluruh
@@ -100,6 +101,9 @@ func (uc *UsahaUsecase) Perbarui(ctx context.Context, id uint, in InputUbahUsaha
 	}
 	if in.Aktif != nil {
 		u.Aktif = *in.Aktif
+	}
+	if in.MidtransAktif != nil {
+		u.MidtransAktif = *in.MidtransAktif
 	}
 	if err := uc.usahas.Perbarui(ctx, u); err != nil {
 		return nil, err
